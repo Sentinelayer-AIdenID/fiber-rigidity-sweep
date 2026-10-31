@@ -19,7 +19,8 @@ def critical_strains(gamma, modulus, nonaff, converged):
 
     K onset is first interior point at least twice the median first-three-point
     plateau, with positive log slope and an equally elevated next point. The
-    nonaffinity onset is its highest strict interior local maximum. All required
+    nonaffinity onset is its highest observed value, only if a strict interior
+    maximum. All required
     neighbors must be successful. No endpoint is declared a resolved transition.
     """
     g, k, a = map(lambda x: np.asarray(x, float), (gamma, modulus, nonaff))
@@ -40,12 +41,12 @@ def critical_strains(gamma, modulus, nonaff, converged):
                         and k[i] > k[i-1]):
                     result["gamma_c_K"] = float(g[i])
                     break
-    candidates = [i for i in range(1, len(g)-1)
-                  if valid[i-1:i+2].all() and np.isfinite(a[i-1:i+2]).all()
-                  and a[i] > a[i-1] and a[i] > a[i+1]]
-    if candidates:
-        i = max(candidates, key=lambda j: a[j])
-        result["gamma_c_nonaffinity"] = float(g[i])
+    observed = valid & np.isfinite(a)
+    if observed.any():
+        i = int(np.argmax(np.where(observed, a, -np.inf)))
+        if (0 < i < len(g)-1 and observed[i-1:i+2].all()
+                and a[i] > a[i-1] and a[i] > a[i+1]):
+            result["gamma_c_nonaffinity"] = float(g[i])
     if result["gamma_c_K"] and result["gamma_c_nonaffinity"]:
         result["agreement_log10"] = float(np.log10(
             result["gamma_c_K"] / result["gamma_c_nonaffinity"]))

@@ -42,3 +42,8 @@ def test_critical_strains_known_upturn_peak_and_fail_closed():
 def test_critical_strains_reject_nonfinite_input():
     with pytest.raises(ValueError, match="strains"):
         critical_strains([.001, .01, np.nan, .1, 1.], [1.]*5, [1.]*5, [True]*5)
+
+
+def test_endpoint_global_peak_is_unresolved_even_with_interior_bump():
+    result = critical_strains([.001, .01, .1, .3, 1.], [1.]*5, [1., 3., 2., 4., 5.], [True]*5)
+    assert result["gamma_c_nonaffinity"] is None

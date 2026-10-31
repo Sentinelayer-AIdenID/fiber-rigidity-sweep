@@ -39,6 +39,14 @@ MUTANTS = [
      "/ (lc * lc)", "tests/test_analysis.py::test_nonaffinity_translation_and_normalization"),
     ("accept-incompatible-resume", "run_sweep.py", 'if k not in ("output", "notes")',
      'if k not in ("output", "notes", "seeds")', "tests/test_io_sweep.py::test_npz_schema_determinism_and_resume"),
+    ("accept-smaller-interior-peak", "rigidity/analysis.py",
+     'i = int(np.argmax(np.where(observed, a, -np.inf)))',
+     'i = next((j for j in range(1, len(g)-1) if observed[j-1:j+2].all() and a[j] > a[j-1] and a[j] > a[j+1]), 0)',
+     "tests/test_analysis.py::test_endpoint_global_peak_is_unresolved_even_with_interior_bump"),
+    ("accept-incomplete-mean-stencil", "rigidity/io.py",
+     'complete_modulus = good.all(axis=0) & np.isfinite(results["K"][iz, ik]).all(axis=0)',
+     'complete_modulus = good.all(axis=0)',
+     "tests/test_io_sweep.py::test_mean_modulus_onset_requires_complete_seed_stencils"),
 ]
 
 

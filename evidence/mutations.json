@@ -1,0 +1,285 @@
+{
+  "method": "Isolated source copies; working source unchanged",
+  "results": [
+    {
+      "mutant": "stretch-gradient-sign",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "gd = (extension",
+        "after": "gd = -(extension"
+      },
+      "test": "tests/test_physics.py::test_analytic_gradient_central_difference[stretch]",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       assert np.float64(1.9999999999695848) < 1e-06",
+        "",
+        "tests/test_physics.py:38: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_analytic_gradient_central_difference[stretch]",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.46s"
+      ]
+    },
+    {
+      "mutant": "bend-gradient-sign",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "ga = (coefficient",
+        "after": "ga = -(coefficient"
+      },
+      "test": "tests/test_physics.py::test_analytic_gradient_central_difference[bend]",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       assert np.float64(0.9804827057159016) < 1e-06",
+        "",
+        "tests/test_physics.py:38: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_analytic_gradient_central_difference[bend]",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.61s"
+      ]
+    },
+    {
+      "mutant": "wrong-stretch-normalization",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "edge_stretch = .5 *",
+        "after": "edge_stretch = .6 *"
+      },
+      "test": "tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 0.4330127018922193 \u00b1 0.00433013",
+        "",
+        "tests/test_physics.py:52: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.44s"
+      ]
+    },
+    {
+      "mutant": "wrong-virial-sign",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "stress = (np.sum",
+        "after": "stress = -(np.sum"
+      },
+      "test": "tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 0.4330127018922193 \u00b1 0.00433013",
+        "",
+        "tests/test_physics.py:53: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.60s"
+      ]
+    },
+    {
+      "mutant": "omit-lees-edwards-offset",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "box[:, 0] += gamma * box[:, 1]",
+        "after": "box[:, 0] += 0. * box[:, 1]"
+      },
+      "test": "tests/test_physics.py::test_lees_edwards_affine_equilibrium[numpy]",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E        +      where <ufunc 'absolute'> = np.abs",
+        "",
+        "tests/test_physics.py:60: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_lees_edwards_affine_equilibrium[numpy] - A...",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.65s"
+      ]
+    },
+    {
+      "mutant": "disable-bend-energy",
+      "source": "rigidity/energy.py",
+      "replacement": {
+        "before": "triplet_bend = .5 * coefficient",
+        "after": "triplet_bend = 0. * coefficient"
+      },
+      "test": "tests/test_physics.py::test_bend_straight_zero_and_kink_positive",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E           assert array(0.) > 0.001",
+        "",
+        "tests/test_physics.py:72: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_physics.py::test_bend_straight_zero_and_kink_positive - ass...",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.64s"
+      ]
+    },
+    {
+      "mutant": "fire-uphill-step",
+      "source": "rigidity/fire.py",
+      "replacement": {
+        "before": "candidate = state[\"x\"] + dt[:, None, None] * velocity",
+        "after": "candidate = state[\"x\"] - dt[:, None, None] * velocity"
+      },
+      "test": "tests/test_fire.py::test_fire_lowers_energy_and_converges",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       assert np.False_",
+        "",
+        "tests/test_fire.py:13: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_fire.py::test_fire_lowers_energy_and_converges - assert np....",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 3.43s"
+      ]
+    },
+    {
+      "mutant": "retain-attached-rattlers",
+      "source": "rigidity/network.py",
+      "replacement": {
+        "before": "retained = _load_bearing_edges(len(network.positions), network.edges[mask], network.images[mask])",
+        "after": "retained = np.ones(np.count_nonzero(mask), dtype=bool)"
+      },
+      "test": "tests/test_network.py::test_cleanup_removes_cycles_attached_at_articulation_or_bridge",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E        +    where array([[0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.]]) = Network(positions=array([[0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.],\\n       [0., 0.]...t_lengths=array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]), bend_lengths=array([], dtype=float64), seed=0, z_target=6.0).positions",
+        "",
+        "tests/test_network.py:90: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_network.py::test_cleanup_removes_cycles_attached_at_articulation_or_bridge",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.59s"
+      ]
+    },
+    {
+      "mutant": "unseeded-randomness",
+      "source": "rigidity/network.py",
+      "replacement": {
+        "before": "rng = np.random.default_rng(int(seed))",
+        "after": "rng = np.random.default_rng()"
+      },
+      "test": "tests/test_network.py::test_network_seed_determinism",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         + 85f0569617e27b1b06aaaddcc1593ad1af45b30b4930a6209ec6cfeac29a876d",
+        "",
+        "tests/test_network.py:46: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_network.py::test_network_seed_determinism - AssertionError:...",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.66s"
+      ]
+    },
+    {
+      "mutant": "include-failed-stress",
+      "source": "rigidity/shear.py",
+      "replacement": {
+        "before": "good = np.asarray(converged, bool) &",
+        "after": "good = np.ones_like(converged, dtype=bool) &"
+      },
+      "test": "tests/test_analysis.py::test_modulus_nonuniform_quadratic_and_failure_gap",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E        +        where <ufunc 'isnan'> = np.isnan",
+        "",
+        "tests/test_analysis.py:15: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_modulus_nonuniform_quadratic_and_failure_gap",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.33s"
+      ]
+    },
+    {
+      "mutant": "wrong-nonaffinity-normalization",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "/ (lc * lc * gamma * gamma)",
+        "after": "/ (lc * lc)"
+      },
+      "test": "tests/test_analysis.py::test_nonaffinity_translation_and_normalization",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 0.0625 \u00b1 6.2e-08",
+        "",
+        "tests/test_analysis.py:25: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_nonaffinity_translation_and_normalization",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.50s"
+      ]
+    },
+    {
+      "mutant": "accept-incompatible-resume",
+      "source": "run_sweep.py",
+      "replacement": {
+        "before": "if k not in (\"output\", \"notes\")",
+        "after": "if k not in (\"output\", \"notes\", \"seeds\")"
+      },
+      "test": "tests/test_io_sweep.py::test_npz_schema_determinism_and_resume",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "{\"arrays_sha256\": \"b39d948d7290fe237588ce3810bda7b8ebfc812923754e6704b300c643d02f4c\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.08568086102604866, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
+        "z=3.80 kappa=0.03: 10/10 converged",
+        "{\"arrays_sha256\": \"1d21c55a3640cfd1850d8b7b6d3fe88aca78cc2c646cc66695690991c301ff62\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.04194788099266589, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_io_sweep.py::test_npz_schema_determinism_and_resume - Faile...",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 4.51s"
+      ]
+    },
+    {
+      "mutant": "accept-smaller-interior-peak",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "i = int(np.argmax(np.where(observed, a, -np.inf)))",
+        "after": "i = next((j for j in range(1, len(g)-1) if observed[j-1:j+2].all() and a[j] > a[j-1] and a[j] > a[j+1]), 0)"
+      },
+      "test": "tests/test_analysis.py::test_endpoint_global_peak_is_unresolved_even_with_interior_bump",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       assert 0.01 is None",
+        "",
+        "tests/test_analysis.py:49: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_endpoint_global_peak_is_unresolved_even_with_interior_bump",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.19s"
+      ]
+    },
+    {
+      "mutant": "accept-incomplete-mean-stencil",
+      "source": "rigidity/io.py",
+      "replacement": {
+        "before": "complete_modulus = good.all(axis=0) & np.isfinite(results[\"K\"][iz, ik]).all(axis=0)",
+        "after": "complete_modulus = good.all(axis=0)"
+      },
+      "test": "tests/test_io_sweep.py::test_mean_modulus_onset_requires_complete_seed_stencils",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       assert 0.1 is None",
+        "",
+        "tests/test_io_sweep.py:97: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_io_sweep.py::test_mean_modulus_onset_requires_complete_seed_stencils",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.66s"
+      ]
+    }
+  ]
+}

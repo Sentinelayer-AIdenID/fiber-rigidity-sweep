@@ -89,6 +89,11 @@ def viewer_curves(results):
                                       out=np.full(len(count), np.nan), where=count > 0)
             estimates = critical_strains(results["gamma"], mean["K"], mean["nonaffinity"],
                                          good.all(axis=0))
+            complete_modulus = good.all(axis=0) & np.isfinite(results["K"][iz, ik]).all(axis=0)
+            estimates["gamma_c_K"] = critical_strains(results["gamma"], mean["K"], mean["nonaffinity"],
+                                                       complete_modulus)["gamma_c_K"]
+            estimates["agreement_log10"] = (float(np.log10(estimates["gamma_c_K"] / estimates["gamma_c_nonaffinity"]))
+                                             if estimates["gamma_c_K"] and estimates["gamma_c_nonaffinity"] else None)
             curves.append(dict(z_target=float(z), z_actual=float(np.mean(results["z_actual"][iz])),
                                kappa=float(kappa), gamma=results["gamma"].tolist(),
                                **{key: finite_list(value) for key, value in mean.items()},

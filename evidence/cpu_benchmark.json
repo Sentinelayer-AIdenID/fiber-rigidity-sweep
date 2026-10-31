@@ -1,0 +1,10 @@
+{
+  "platform": "cpu",
+  "batch": 8,
+  "nodes": 1019,
+  "steps_per_state": 1000,
+  "elapsed_seconds": 1.2589576370082796,
+  "node_iterations": 8152000,
+  "node_iterations_per_second": 6475198.021255094,
+  "method": "One warmup followed by one timed float64 JAX CPU batch; excludes export and topology generation"
+}

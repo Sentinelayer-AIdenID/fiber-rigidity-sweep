@@ -1,0 +1,8 @@
+{
+  "interrupt": "SIGINT sent after first checkpoint appeared",
+  "interrupt_exit": 130,
+  "checkpoints_at_interrupt": 2,
+  "resume_exit": 0,
+  "arrays_equal": true,
+  "arrays_sha256": "c2f88de73a110029b9b16cd8c0b381aca9793ea9a84093abae4435b1a6aa2150"
+}

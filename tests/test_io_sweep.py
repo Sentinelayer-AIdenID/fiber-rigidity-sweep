@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from rigidity.io import array_hash, load_npz
+from rigidity.io import array_hash, load_npz, viewer_curves
 from run_sweep import load_config, run
 
 
@@ -83,3 +83,17 @@ def test_config_grid_contract_and_invalid_input(tmp_path):
     path.write_text(yaml.safe_dump(cfg))
     with pytest.raises(ValueError, match="finite"):
         load_config(path)
+
+
+def test_mean_modulus_onset_requires_complete_seed_stencils():
+    shape = (1, 1, 2, 7)
+    values = dict(z_target=np.array([3.5]), kappa=np.array([.01]), z_actual=np.array([[3.5, 3.5]]),
+                  gamma=np.geomspace(.001, 1., 7), converged=np.ones(shape, bool))
+    values["K"] = np.broadcast_to([1., 1., 1., 1., 3., 4., 5.], shape).copy()
+    values["K"][0, 0, 0, 5] = np.nan  # A failed derivative stencil in one realization.
+    for key in ("nonaffinity", "stretch_energy", "bend_energy"):
+        values[key] = np.broadcast_to([1., 2., 3., 5., 3., 2., 1.], shape).copy()
+    curve = viewer_curves(values)[0]
+    assert curve["gamma_c_K"] is None
+    assert curve["gamma_c_nonaffinity"] == values["gamma"][3]
+    assert curve["modulus_count"][5] == 1

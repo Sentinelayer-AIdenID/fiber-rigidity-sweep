@@ -3,6 +3,7 @@
 
 import argparse
 import hashlib
+from importlib.metadata import version
 import json
 from pathlib import Path
 import sys
@@ -55,6 +56,12 @@ def fingerprint(config):
     # Changing solver source or physical config invalidates old checkpoints.
     clean = {k: v for k, v in config.items() if k not in ("output", "notes")}
     digest = hashlib.sha256(json.dumps(clean, sort_keys=True).encode())
+    runtime = {name: version(name) for name in ("numpy", "scipy", "jax", "jaxlib")}
+    if config["backend"] == "jax":
+        import jax
+        runtime["platform"] = jax.default_backend()
+    runtime["python"] = list(sys.version_info[:2])
+    digest.update(json.dumps(runtime, sort_keys=True).encode())
     for path in sorted((Path(__file__).parent / "rigidity").glob("*.py")) + [Path(__file__)]:
         digest.update(path.name.encode())
         digest.update(path.read_bytes())
