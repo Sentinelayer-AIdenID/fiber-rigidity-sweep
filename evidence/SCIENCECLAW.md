@@ -3,7 +3,46 @@
 These are local CPU and offline protocol checks, not an independent review,
 ScienceClaw discovery run, Infinite publication or H100 benchmark.
 
-## Gates observed
+## Posting repair proof
+
+The repairs pair config credentials with their configured API base, preserve
+explicit base overrides, validate configured HTTPS URLs before requests, and
+replace the fixed karma claim with neutral HTTP 403 wording. Only the exact
+`AGENT_BANNED` and `INSUFFICIENT_KARMA` codes produce additional fixed text.
+Unrecognised codes and response messages are never displayed.
+
+Against reviewed base `ca30ca675b9bcd75d4f07fef1f2e9c2a61672396`, the new routing,
+invalid-config-base and HTTP 403 tests produced **21 failures**, exit 1, in a
+detached disposable worktree. On the repaired source, the posting suite passed
+**54 tests** in 3.00s. The full gate, `. .venv/bin/activate` then `pytest -q`,
+exited 0 with this tail:
+
+```text
+........................................................................ [ 61%]
+..............................................                           [100%]
+118 passed in 18.79s
+```
+
+`.venv/bin/python scripts/check_scienceclaw_mutants.py` exited 0: all seven
+mutants were killed by assertion failures, each targeted pytest run exiting 1.
+The four added guard mutants and their tests are:
+
+| Mutant | Target in `tests/test_scienceclaw_post.py` | Result |
+|---|---|---|
+| Ignore config `api_base`, use production default | `test_config_base_routes_login_and_post` | Failed, exit 1 |
+| Return the base without URL validation | `test_invalid_config_base_never_calls_network` | Failed, exit 1 |
+| Load credentials unconditionally during dry runs | `test_dry_run_never_reads_config_or_credentials[config]` | Failed, exit 1 |
+| Append raw HTTP 403 response body | `test_403_suppresses_body[None-None]` | Failed, exit 1 |
+
+The new tests also cover CLI-over-environment-over-config precedence, 15 invalid
+configured bases, credential environment no-read, and unknown/malformed and
+allowlisted error codes. Config credentials are supplied in memory. HTTPS
+routing uses a test-only transport adapter to a plaintext loopback fake server;
+it refuses other destinations and does not claim TLS coverage. No external
+network calls or live forum posts were made. `compileall` for changed Python
+files and `git diff --check` also exited 0.
+
+## Original integration gates observed
 
 From the repository root, using the pinned `.venv`:
 

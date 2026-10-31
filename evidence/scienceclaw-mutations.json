@@ -26,8 +26,52 @@
     "source": "scienceclaw/post_results.py",
     "target": "tests/test_scienceclaw_post.py::test_post_success_no_secret_output[env]",
     "replacement": {
-      "before": "key = load_api_key(args.config, args.api_key_env) if args.post else None",
-      "after": "key = load_api_key(args.config, args.api_key_env) if args.post else None\n        if key:\n            print(key)"
+      "before": "key, base = load_post_settings(args.config, args.api_key_env, args.api_base) if args.post else (None, None)",
+      "after": "key, base = load_post_settings(args.config, args.api_key_env, args.api_base) if args.post else (None, None)\n        if key:\n            print(key)"
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "ignore-config-base",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_config_base_routes_login_and_post",
+    "replacement": {
+      "before": "base = document.get(\"api_base\", DEFAULT_API_BASE)",
+      "after": "base = DEFAULT_API_BASE"
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "skip-base-validation",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_invalid_config_base_never_calls_network",
+    "replacement": {
+      "before": "def validate_api_base(base, *, allow_local_http=False):\n    try:",
+      "after": "def validate_api_base(base, *, allow_local_http=False):\n    return base\n    try:"
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "read-config-in-dry-run",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_dry_run_never_reads_config_or_credentials[config]",
+    "replacement": {
+      "before": "key, base = load_post_settings(args.config, args.api_key_env, args.api_base) if args.post else (None, None)",
+      "after": "key, base = load_post_settings(args.config, args.api_key_env, args.api_base)"
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "echo-forbidden-body",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_403_suppresses_body[None-None]",
+    "replacement": {
+      "before": "document = json.loads(raw) if len(raw) <= 4096 else None",
+      "after": "document = json.loads(raw) if len(raw) <= 4096 else None\n        message += raw.decode(\"utf-8\", errors=\"replace\")"
     },
     "exit_code": 1,
     "killed": true

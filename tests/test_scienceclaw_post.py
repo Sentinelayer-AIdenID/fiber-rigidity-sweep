@@ -1,5 +1,8 @@
 from contextlib import contextmanager
+import builtins
+import http.client
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import io
 import json
 from pathlib import Path
 import threading
@@ -41,7 +44,7 @@ def fake_server(*, login_status=200, post_status=201, login_body=None, post_body
             status = login_status if login else post_status
             data = (login_body if login_body is not None else {"token": SESSION_VALUE}) if login else (
                 post_body if post_body is not None else {"post": {"id": "local-post-17"}})
-            if status >= 400:
+            if status >= 400 and (login_body if login else post_body) is None:
                 data = {"error": "Minimum 10 karma required to post", "echo": [API_VALUE, SESSION_VALUE]}
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
@@ -75,7 +78,7 @@ def test_dry_run_default_no_network(finished, monkeypatch, capsys, tmp_path):
         pytest.fail("dry run attempted credentials or network")
 
     monkeypatch.setattr(poster, "api_request", forbidden)
-    monkeypatch.setattr(poster, "load_api_key", forbidden)
+    monkeypatch.setattr(poster, "load_post_settings", forbidden)
     draft = tmp_path / "draft.json"
     assert poster.main(base_args(finished) + ["--draft-out", str(draft),
         "--repo-url", "https://example.org/repo", "--viewer-url", "https://example.org/viewer"]) == 0
@@ -125,7 +128,7 @@ def test_post_success_no_secret_output(finished, monkeypatch, capsys, source, tm
 
 @pytest.mark.parametrize("options,message,count", [
     ({"login_status": 401}, "HTTP 401", 1),
-    ({"post_status": 403}, "at least 10 karma", 2),
+    ({"post_status": 403}, "check your agent's standing and the community's rules", 2),
     ({"post_status": 500}, "HTTP 500", 2),
     ({"login_body": {}}, "no valid token", 1),
     ({"login_body": []}, "invalid JSON object", 1),
@@ -229,4 +232,120 @@ def test_credential_in_draft_is_not_written(finished, monkeypatch, capsys, tmp_p
         "--repo-url", "https://example.org/" + API_VALUE, "--draft-out", str(draft)]) == 1
     captured = capsys.readouterr()
     assert captured.out == "" and not draft.exists()
+    assert_no_secrets(captured)
+
+
+def config_document(monkeypatch, path, document):
+    # Config credentials exist only in memory, including in failure proofs.
+    original = Path.read_text
+    monkeypatch.setattr(Path, "read_text", lambda self, *a, **kw:
+        json.dumps(document) if self == path else original(self, *a, **kw))
+
+
+@contextmanager
+def configured_server(monkeypatch):
+    with fake_server() as (url, requests):
+        class LocalHTTPSHandler(poster.urllib.request.HTTPSHandler):
+            def https_open(self, request):
+                # Exercise HTTPS URL selection via a plaintext loopback transport.
+                # This tests routing, not TLS, and refuses production destinations.
+                assert request.host == poster.urllib.parse.urlsplit(url).netloc
+                return self.do_open(http.client.HTTPConnection, request)
+
+        monkeypatch.setattr(poster.urllib.request, "HTTPSHandler", LocalHTTPSHandler)
+        yield url.replace("http://", "https://", 1), requests
+
+
+def test_config_base_routes_login_and_post(finished, monkeypatch, capsys, tmp_path):
+    monkeypatch.delenv("INFINITE_API_BASE", raising=False)
+    config = tmp_path / "account.json"
+    with configured_server(monkeypatch) as (url, requests):
+        config_document(monkeypatch, config, {"api_key": API_VALUE, "api_base": url})
+        assert poster.main(base_args(finished) + ["--post", "--config", str(config)]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert json.loads(captured.out) == {"post_id": "local-post-17"}
+    assert [request[0] for request in requests] == ["/api/agents/login", "/api/posts"]
+    assert requests[0][1] == {"apiKey": API_VALUE}
+    assert requests[1][2] == "Bearer " + SESSION_VALUE
+    assert_no_secrets(captured)
+
+
+@pytest.mark.parametrize("override", ["cli", "env"])
+def test_explicit_base_overrides_config(finished, monkeypatch, capsys, tmp_path, override):
+    config = tmp_path / "account.json"
+    with fake_server() as (configured, config_requests), fake_server() as (url, requests):
+        config_document(monkeypatch, config, {"api_key": API_VALUE, "api_base": configured})
+        # CLI must beat both the environment and config; environment beats config.
+        monkeypatch.setenv("INFINITE_API_BASE", configured if override == "cli" else url)
+        args = ["--api-base", url] if override == "cli" else []
+        assert poster.main(base_args(finished) + ["--post", "--config", str(config)] + args) == 0
+    assert config_requests == []
+    assert [request[0] for request in requests] == ["/api/agents/login", "/api/posts"]
+    assert requests[0][1] == {"apiKey": API_VALUE}
+    assert_no_secrets(capsys.readouterr())
+
+
+@pytest.mark.parametrize("base", [
+    "http://example.org/api", "http://127.0.0.1/api", "https://user:password@example.org/api",
+    "https://@example.org/api", "garbage", "https:///api", "https://example.org/api?q=1",
+    "https://example.org/api#fragment", "https://example.org:invalid/api", "https://[invalid",
+    "https://exam ple.org/api", "https://example.org/api\n", "", None, 7,
+])
+def test_invalid_config_base_never_calls_network(finished, monkeypatch, capsys, tmp_path, base):
+    config = tmp_path / "account.json"
+    config_document(monkeypatch, config, {"api_key": API_VALUE, "api_base": base})
+    monkeypatch.delenv("INFINITE_API_BASE", raising=False)
+    monkeypatch.setattr(poster, "api_request", lambda *a, **k: pytest.fail("unexpected network"))
+    assert poster.main(base_args(finished) + ["--post", "--config", str(config)]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == "" and "API base must be" in captured.err and "HTTPS" in captured.err
+    assert_no_secrets(captured)
+
+
+@pytest.mark.parametrize("source", ["config", "env"])
+def test_dry_run_never_reads_config_or_credentials(finished, monkeypatch, capsys, tmp_path, source):
+    config = tmp_path / "account.json"
+    config.write_text("{}")
+
+    def guard_open(original):
+        def guarded(path, *args, **kwargs):
+            assert str(path) != str(config), "dry run opened config"
+            return original(path, *args, **kwargs)
+        return guarded
+
+    monkeypatch.setattr(Path, "read_text", guard_open(Path.read_text))
+    monkeypatch.setattr(builtins, "open", guard_open(builtins.open))
+    monkeypatch.setattr(io, "open", guard_open(io.open))
+    original_get = poster.os.environ.get
+
+    def guard_env(name, *args):
+        assert name != "LOCAL_TEST_API", "dry run read credential environment"
+        return original_get(name, *args)
+
+    monkeypatch.setattr(poster.os.environ, "get", guard_env)
+    monkeypatch.setattr(poster, "api_request", lambda *a, **k: pytest.fail("unexpected network"))
+    args = ["--config", str(config)] if source == "config" else ["--api-key-env", "LOCAL_TEST_API"]
+    assert poster.main(base_args(finished) + args) == 0
+    captured = capsys.readouterr()
+    assert captured.err == "" and json.loads(captured.out)["community"] == "materials"
+
+
+@pytest.mark.parametrize("code,detail", [
+    (None, None), ("unrecognised", None), (["AGENT_BANNED"], None),
+    ("AGENT_BANNED", "The forum reports that this agent is banned."),
+    ("INSUFFICIENT_KARMA", "The forum requires more karma for this action."),
+])
+def test_403_suppresses_body(finished, monkeypatch, capsys, code, detail):
+    marker = "UNTRUSTED_RESPONSE_MARKER"
+    monkeypatch.setenv("LOCAL_TEST_API", API_VALUE)
+    body = {"code": code, "error": marker, "message": marker, "echo": [API_VALUE, SESSION_VALUE]}
+    with fake_server(post_status=403, post_body=body) as (url, requests):
+        assert poster.main(base_args(finished) + ["--post", "--api-base", url,
+                                                 "--api-key-env", "LOCAL_TEST_API"]) == 1
+    captured = capsys.readouterr()
+    expected = "The forum refused the post (HTTP 403); check your agent's standing and the community's rules."
+    assert captured.out == "" and captured.err == expected + (" " + detail if detail else "") + "\n"
+    assert marker not in captured.out + captured.err
+    assert len(requests) == 2
     assert_no_secrets(captured)
