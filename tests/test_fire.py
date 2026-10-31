@@ -72,3 +72,24 @@ def test_nonfinite_member_is_failed_and_never_converged(backend):
     assert result["failed"][0]
     assert not result["converged"][0]
     assert result["steps"][0] == 0
+
+
+@pytest.mark.parametrize("backend", ["numpy", "jax"])
+def test_skip_mask_preserves_other_members_and_never_claims_equilibrium(backend):
+    networks = [generate_network(6, 6, 3.8, seed=3), generate_network(4, 4, 3.8, seed=5)]
+    settings = dict(backend=backend, max_steps=3000, chunk_steps=100, force_tol=1e-8)
+    baseline = minimize_batch(networks, [.15, .1], [.03, .03], **settings)
+    skipped = minimize_batch(networks, [.15, .1], [.03, .03], skip_mask=[True, False], **settings)
+    assert baseline["converged"].all()
+    np.testing.assert_array_equal(skipped["skipped"], [True, False])
+    np.testing.assert_array_equal(skipped["converged"], [False, True])
+    assert skipped["steps"][0] == 0
+    assert skipped["max_force"][0] > 1e-8
+    for key in ("positions", "steps", "energy", "max_force", "initial_energy"):
+        np.testing.assert_array_equal(skipped[key][1], baseline[key][1])
+    assert skipped["energy"][0] == skipped["initial_energy"][0]
+    # A cached sample is not certified again, even if it starts force-balanced.
+    lattice = triangular_lattice(4, 4)
+    equilibrium = minimize_batch([lattice], [.1], [.01], skip_mask=[True], **settings)
+    assert equilibrium["steps"][0] == 0
+    assert not equilibrium["converged"][0]

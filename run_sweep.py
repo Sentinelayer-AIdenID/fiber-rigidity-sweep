@@ -164,6 +164,7 @@ def run(config, *, resume=False, output=None, stop_after_checkpoints=None):
                 snapshot = minimize_batch(group_networks,
                     [config["gamma"][gi] for si, gi in group], [kappa]*len(group),
                     backend=config["backend"], initial_positions=initial, callback=save_finished,
+                    skip_mask=[checkpoints[gi]["available"][si] for si, gi in group],
                     **config["fire"])
                 save_finished(snapshot)
             for gi, cp in enumerate(checkpoints):

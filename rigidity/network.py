@@ -7,10 +7,9 @@ share the crosslink. Thus the undiluted phantom network has coordination four.
 """
 
 from dataclasses import dataclass
+from collections import deque
 
 import numpy as np
-from scipy import sparse
-from scipy.sparse.csgraph import connected_components
 
 
 @dataclass
@@ -99,47 +98,118 @@ def _core_mask(n, edges, mask):
         mask = updated
 
 
-def _wrapping_nodes(n, edges, images):
-    """Keep components with a nonzero winding cycle, rather than seam crossings.
+def _load_bearing_edges(n, edges, images):
+    """Keep winding blocks and paths joining them in the block-cut forest.
 
-    A finite component can straddle a periodic seam. Integer image potentials
-    distinguish such components from a true wrapping cycle. Sparse component
-    labels let traversal stop as soon as a winding witness is found.
+    Iterative Tarjan traversal finds biconnected edge blocks in linear time.
+    Integer DFS image potentials distinguish genuine winding cycles from finite
+    cycles crossing a seam. Finite leaf blocks are then peeled, removing loops
+    attached through a single articulation or bridge. This is a graph-topology
+    cleanup, not a rigidity-matrix analysis of the remaining internal modes.
     """
     if not len(edges):
-        return np.zeros(n, dtype=bool)
+        return np.zeros(0, dtype=bool)
+    m = len(edges)
     row = np.concatenate((edges[:, 0], edges[:, 1]))
     col = np.concatenate((edges[:, 1], edges[:, 0]))
-    graph = sparse.csr_matrix((np.ones(len(row)), (row, col)), shape=(n, n))
-    count, labels = connected_components(graph, directed=False)
-    candidates = np.unique(labels[edges[np.any(images != 0, axis=1), 0]])
-    keep = np.zeros(count, dtype=bool)
     # Keep parallel edges distinct; they can themselves witness a winding cycle.
     order = np.argsort(row, kind="stable")
     neighbors = col[order]
     shifts = np.concatenate((images, -images))[order]
+    edge_ids = np.tile(np.arange(m), 2)[order]
     pointers = np.r_[0, np.cumsum(np.bincount(row, minlength=n))]
-    visited = np.zeros(n, dtype=bool)
+    discovery = np.full(n, -1, dtype=np.int64)
+    low = np.zeros(n, dtype=np.int64)
+    parent = np.full(n, -1, dtype=np.int64)
+    parent_edge = np.full(n, -1, dtype=np.int64)
+    cursor = pointers[:-1].copy()
     potentials = np.zeros((n, 2), dtype=np.int64)
-    _, roots = np.unique(labels, return_index=True)
-    for component in candidates:
-        root = roots[component]
+    edge_winds = np.zeros(m, dtype=bool)
+    block = np.full(m, -1, dtype=np.int64)
+    block_winds = []
+    edge_stack = []
+    clock = 0
+    for root in np.flatnonzero(np.diff(pointers)):
+        if discovery[root] >= 0:
+            continue
+        discovery[root] = low[root] = clock
+        clock += 1
         stack = [int(root)]
-        visited[root] = True
-        while stack and not keep[component]:
-            node = stack.pop()
-            for index in range(pointers[node], pointers[node + 1]):
+        while stack:
+            node = stack[-1]
+            index = cursor[node]
+            if index < pointers[node + 1]:
+                cursor[node] += 1
                 other = neighbors[index]
-                proposed = potentials[node] + shifts[index]
-                if visited[other]:
-                    if np.any(potentials[other] != proposed):
-                        keep[component] = True
-                        break
-                else:
-                    potentials[other] = proposed
-                    visited[other] = True
+                edge = edge_ids[index]
+                if edge == parent_edge[node]:
+                    continue
+                if other == node:
+                    if block[edge] < 0:
+                        block[edge] = len(block_winds)
+                        block_winds.append(bool(np.any(shifts[index])))
+                elif discovery[other] < 0:
+                    parent[other], parent_edge[other] = node, edge
+                    potentials[other] = potentials[node] + shifts[index]
+                    discovery[other] = low[other] = clock
+                    clock += 1
+                    edge_stack.append(int(edge))
                     stack.append(int(other))
-    return keep[labels]
+                elif discovery[other] < discovery[node]:
+                    low[node] = min(low[node], discovery[other])
+                    edge_stack.append(int(edge))
+                    edge_winds[edge] = np.any(potentials[node] + shifts[index] != potentials[other])
+            else:
+                stack.pop()
+                previous = parent[node]
+                if previous >= 0:
+                    low[previous] = min(low[previous], low[node])
+                    if low[node] >= discovery[previous]:
+                        winds = False
+                        while edge_stack:
+                            edge = edge_stack.pop()
+                            block[edge] = len(block_winds)
+                            winds |= bool(edge_winds[edge])
+                            if edge == parent_edge[node]:
+                                break
+                        block_winds.append(winds)
+    if np.any(block < 0):
+        raise RuntimeError("incomplete biconnected decomposition")
+    protected_blocks = np.asarray(block_winds, dtype=bool)
+    if protected_blocks.all() or not protected_blocks.any():
+        return protected_blocks[block]
+
+    # Each block is joined to its articulation nodes. Nonarticulation nodes
+    # are omitted because they are leaves with no role in connecting blocks.
+    membership = np.unique(np.repeat(block, 2) * n + edges.ravel())
+    member_nodes, member_blocks = membership % n, membership // n
+    articulation = np.bincount(member_nodes, minlength=n) > 1
+    use = articulation[member_nodes]
+    left, right = member_nodes[use], n + member_blocks[use]
+    size = n + len(block_winds)
+    forest_row = np.r_[left, right]
+    forest_col = np.r_[right, left]
+    forest_order = np.argsort(forest_row, kind="stable")
+    forest_neighbors = forest_col[forest_order]
+    degree = np.bincount(forest_row, minlength=size)
+    forest_ptr = np.r_[0, np.cumsum(degree)]
+    protected = np.r_[np.zeros(n, dtype=bool), protected_blocks]
+    active = np.ones(size, dtype=bool)
+    # Unused original nodes need not enter the queue.
+    eligible = np.r_[articulation, np.ones(len(block_winds), dtype=bool)]
+    queue = deque(np.flatnonzero(eligible & ~protected & (degree <= 1)).tolist())
+    while queue:
+        node = queue.popleft()
+        if not active[node]:
+            continue
+        active[node] = False
+        for index in range(forest_ptr[node], forest_ptr[node + 1]):
+            other = forest_neighbors[index]
+            if active[other]:
+                degree[other] -= 1
+                if degree[other] <= 1 and not protected[other]:
+                    queue.append(int(other))
+    return active[n + block]
 
 
 def _subset(network, edge_mask):
@@ -164,17 +234,17 @@ def _subset(network, edge_mask):
 
 
 def cleanup(network, edge_mask=None):
-    """Remove dangling bonds, isolated nodes, and all finite graph components.
+    """Remove dangling bonds, finite components, and singly attached rattlers.
 
-    A component is retained if it winds in at least one periodic direction.
-    Degree-two hinges remain physical bending degrees of freedom; cleanup does
-    not claim to remove all floppy modes of a sub-isostatic network.
+    Retain biconnected blocks with periodic winding and paths connecting those
+    blocks. Degree-two hinges remain physical bending degrees of freedom;
+    cleanup does not remove internal floppy modes of the wrapping core.
     """
     if edge_mask is None:
         edge_mask = np.ones(len(network.edges), dtype=bool)
     mask = _core_mask(len(network.positions), network.edges, edge_mask)
-    wrapping = _wrapping_nodes(len(network.positions), network.edges[mask], network.images[mask])
-    mask &= wrapping[network.edges[:, 0]]
+    retained = _load_bearing_edges(len(network.positions), network.edges[mask], network.images[mask])
+    mask[np.flatnonzero(mask)] = retained
     return _subset(network, mask)
 
 
@@ -209,6 +279,22 @@ def generate_network(nx, ny, z, seed):
         else:
             high = retained - 1
     result = cleanup(network, best_mask)
+    # Usually the wrapping core dominates and this adjustment is unnecessary.
+    # Small samples can lose a material fraction of sites to finite decorations;
+    # in that case search using the complete cleanup, not the pre-cleanup count.
+    if abs(result.z_actual - z) > 0.02:
+        low, high = 0, len(rank)
+        error = abs(result.z_actual - z)
+        while low <= high:
+            retained = (low + high) // 2
+            candidate = cleanup(network, rank < retained)
+            actual = candidate.z_actual
+            if abs(actual - z) < error:
+                result, error = candidate, abs(actual - z)
+            if actual < z:
+                low = retained + 1
+            else:
+                high = retained - 1
     if not len(result.edges):
         raise ValueError("no wrapping network remains; increase lattice size or target z")
     return result

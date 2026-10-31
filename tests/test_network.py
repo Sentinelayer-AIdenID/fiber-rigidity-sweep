@@ -47,6 +47,14 @@ def test_network_seed_determinism():
     assert digest(first) != digest(generate_network(12, 12, 3.5, 10))
 
 
+def test_small_network_retunes_after_removing_finite_decorations():
+    net = generate_network(4, 4, 3.2, 56)
+    # Before accounting for the removed decoration the chosen retention gives
+    # z=3.285714; full-cleanup retuning selects the closer value 3.142857.
+    assert abs(net.z_actual - 3.2) < 0.06
+    assert np.bincount(net.edges.ravel(), minlength=len(net.positions)).min() >= 2
+
+
 def test_cleanup_rejects_finite_seam_crossing_and_dangling_bonds():
     # A winding triangle, a dangling edge, and a finite triangle that crosses
     # the periodic seam twice with opposite signs. Merely testing images != 0
@@ -60,6 +68,54 @@ def test_cleanup_rejects_finite_seam_crossing_and_dangling_bonds():
     assert len(result.positions) == 3
     assert len(result.edges) == 3
     assert result.images[:, 0].sum() == 1
+
+
+def graph_network(edges, images):
+    edges = np.asarray(edges, dtype=int)
+    return Network(np.zeros((edges.max() + 1, 2)), np.eye(2), edges,
+                   np.asarray(images, dtype=int), np.empty((0, 3), dtype=int),
+                   np.empty((0, 2, 2), dtype=int), np.ones(len(edges)), np.empty(0))
+
+
+def test_cleanup_removes_cycles_attached_at_articulation_or_bridge():
+    # Triangle 0-1-2 wraps. Cycle 2-3-4 touches it only at articulation 2.
+    # Cycle 5-6-7 attaches by bridge 1-5. Both are finite rattlers despite
+    # surviving the graph 2-core (every vertex initially has degree >= 2).
+    edges = [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 2],
+             [1, 5], [5, 6], [6, 7], [7, 5]]
+    images = np.zeros((len(edges), 2), dtype=int)
+    images[2, 0] = 1
+    images[3, 0], images[4, 0] = 1, -1  # Finite seam-crossing decoration.
+    result = cleanup(graph_network(edges, images))
+    assert len(result.positions) == 3
+    np.testing.assert_array_equal(result.edges, edges[:3])
+
+
+def test_cleanup_preserves_path_joining_two_winding_blocks():
+    edges = [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4],
+             [4, 5], [5, 6], [6, 4], [3, 7], [7, 8], [8, 3]]
+    images = np.zeros((len(edges), 2), dtype=int)
+    images[2, 0], images[7, 1] = 1, 1
+    result = cleanup(graph_network(edges, images))
+    assert len(result.positions) == 7
+    # The degree-two path 2-3-4 transmits between wrapping blocks; the finite
+    # decoration 3-7-8 is removed without discarding the connecting path.
+    np.testing.assert_array_equal(result.edges, edges[:8])
+
+
+@pytest.mark.parametrize("loop", [False, True])
+def test_cleanup_preserves_parallel_edge_and_self_loop_winding(loop):
+    if loop:
+        edges = [[0, 0], [0, 1], [1, 2], [2, 0]]
+        images = [[1, 0], [0, 0], [0, 0], [0, 0]]
+        expected = 1
+    else:
+        edges = [[0, 1], [0, 1], [1, 2], [2, 3], [3, 1]]
+        images = [[0, 0], [1, 0], [0, 0], [0, 0], [0, 0]]
+        expected = 2
+    result = cleanup(graph_network(edges, images))
+    assert len(result.edges) == expected
+    np.testing.assert_array_equal(result.images, images[:expected])
 
 
 @pytest.mark.parametrize("arguments", [(2, 4, 3.5, 0), (4, 5, 3.5, 0),

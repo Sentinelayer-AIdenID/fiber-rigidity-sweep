@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Rigidity Sweep · Fiber network explorer</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/regl@2.1.1/dist/regl.min.js"></script>
+  <script defer src="sample-data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow"><span class="brand-mark" aria-hidden="true">◈</span> RIGIDITY SWEEP <span class="divider">/</span> NETWORK EXPLORER</p>
+        <h1>From floppy to rigid.</h1>
+        <p class="intro">Explore how strain and connectivity reshape the mechanics of a two-dimensional fiber network.</p>
+      </div>
+      <div class="file-control">
+        <label class="button" for="file-input">Open sweep JSON <span aria-hidden="true">↗</span></label>
+        <input id="file-input" type="file" accept=".json,application/json">
+        <button id="sample-button" class="text-button" type="button">Load bundled sample</button>
+      </div>
+    </header>
+
+    <div id="message" class="message" role="status" aria-live="polite">Loading the bundled CPU sample…</div>
+    <section class="toolbar" aria-label="Dataset controls">
+      <div class="dataset-name"><span class="status-dot" aria-hidden="true"></span><span id="dataset-label">No data loaded</span></div>
+      <label>Bending stiffness κ <select id="kappa-select" disabled aria-label="Bending stiffness"></select></label>
+      <label>Target connectivity z <select id="z-select" disabled aria-label="Target connectivity"></select></label>
+      <label>Network seed <select id="seed-select" disabled aria-label="Network seed"></select></label>
+    </section>
+
+    <section class="metric-grid" aria-label="Selected curve summary">
+      <div class="metric"><span class="metric-label">Connectivity after cleanup</span><strong id="actual-z">—</strong><span class="metric-note">z = 2 × bonds / retained nodes</span></div>
+      <div class="metric"><span class="metric-label">Modulus upturn · γ<sub>c</sub></span><strong id="critical-k">—</strong><span class="metric-note">Grid estimate from K′</span></div>
+      <div class="metric"><span class="metric-label">Nonaffinity peak · γ<sub>c</sub></span><strong id="critical-na">—</strong><span class="metric-note">Grid estimate from Γ</span></div>
+      <div class="metric"><span class="metric-label">Estimator separation</span><strong id="agreement">—</strong><span class="metric-note">|log₁₀(γ<sub>c,K</sub> / γ<sub>c,Γ</sub>)| decades</span></div>
+    </section>
+
+    <div class="panel-grid">
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">01 / COLLECTIVE RESPONSE</p><h2>Where stiffness emerges</h2></div><span class="tag">K′ = dσ / dγ</span></div>
+        <div id="heatmap" class="plot" aria-label="Heatmap of differential shear modulus versus shear strain and target connectivity"></div>
+        <p class="panel-note">Color is log₁₀ K′. Blank cells have unavailable or nonpositive K′. Lines mark the modulus upturn and nonaffinity peak; an absent line means no resolved estimate.</p>
+      </section>
+      <section class="panel network-panel">
+        <div class="panel-heading"><div><p class="eyebrow">02 / MICROSCOPIC RESPONSE</p><h2>The fibers carrying energy</h2></div><div class="segmented" role="group" aria-label="Network energy coloring"><button type="button" id="stretch-button" aria-pressed="true">Stretch</button><button type="button" id="bend-button" aria-pressed="false">Bend</button></div></div>
+        <div class="network-stage" id="network-stage"><canvas id="network-canvas" aria-label="Sheared network with bonds colored by energy"></canvas><div id="network-empty" class="empty-overlay" hidden>No network frame for this selection.</div><div class="network-badge" id="network-status">No frame</div><span class="renderer-label" id="renderer-label"></span></div>
+        <div class="energy-legend"><span id="energy-min">0</span><span class="gradient-bar" aria-hidden="true"></span><span id="energy-max">—</span><span class="legend-unit" id="energy-kind">stretch energy / bond</span></div>
+        <div class="strain-controls"><label for="strain-slider">Shear strain <strong id="strain-value">—</strong></label><input id="strain-slider" type="range" min="0" max="0" value="0" step="1" disabled><div class="slider-ends"><span id="strain-min">—</span><span id="strain-max">—</span></div></div>
+        <p class="panel-note" id="frame-note">Periodic bonds use their image-corrected displacement. Colors use one scale across strains in the selected network.</p>
+      </section>
+    </div>
+
+    <section class="panel response-panel">
+      <div class="panel-heading"><div><p class="eyebrow">03 / SELECTED CONNECTIVITY</p><h2>Stiffness and rearrangement</h2></div><span id="curve-label" class="tag">No curve</span></div>
+      <div id="response-plot" class="response-plot" aria-label="Differential modulus and nonaffinity versus shear strain"></div>
+      <p class="panel-note">Γ = ⟨|u − u<sub>affine</sub>|²⟩ / (l<sub>c</sub>² γ²). Curves aggregate converged seeds. Missing values stay missing; no interpolated transition is implied.</p>
+    </section>
+
+    <footer>
+      <p><strong>A map, not a universal curve.</strong> The bundled small CPU run demonstrates the workflow. Finite size, the strain grid, the bending stiffness and incomplete relaxation can shift or obscure a transition. Read the README for the model and fitting conventions.</p>
+      <p>Static viewer · MIT licensed · Computation stays in your browser. The plotting libraries load from version-pinned CDNs; no server or upload is needed.</p>
+    </footer>
+    <noscript>This viewer requires JavaScript. The exported JSON and NPZ files remain readable independently.</noscript>
+  </main>
+</body>
+</html>

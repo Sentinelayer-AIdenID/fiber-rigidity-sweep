@@ -58,7 +58,8 @@ def _force_max(force, node_mask, xp):
 def _step(state, data, gammas, kappas, force_tol, max_steps, dt_max, evaluate, xp):
     """One semi-implicit Euler FIRE update (Bitzek et al., 2006)."""
     mask = data["node_mask"][:, :, None]
-    active = (~state["converged"] & ~state["failed"] & (state["steps"] < max_steps))
+    active = (~state["converged"] & ~state["failed"] & ~state["skipped"]
+              & (state["steps"] < max_steps))
     force = state["force"]
     velocity = state["v"] + state["dt"][:, None, None] * force
     power = xp.sum(velocity * force, axis=(1, 2))
@@ -119,7 +120,7 @@ def _jax_functions():
     def chunk(state, data, gammas, kappas, force_tol, max_steps, dt_max, chunk_steps):
         def condition(carry):
             tick, current = carry
-            active = (~current["converged"] & ~current["failed"]
+            active = (~current["converged"] & ~current["failed"] & ~current["skipped"]
                       & (current["steps"] < max_steps))
             return (tick < chunk_steps) & jnp.any(active)
 
@@ -135,12 +136,12 @@ def _jax_functions():
 def _snapshot(state):
     return {"positions": np.asarray(state["x"]).copy(),
             **{key: np.asarray(state[key]).copy() for key in
-               ("converged", "steps", "max_force", "energy", "initial_energy", "failed")}}
+               ("converged", "steps", "max_force", "energy", "initial_energy", "failed", "skipped")}}
 
 
 def minimize_batch(networks, gammas, kappas, *, backend="jax", max_steps=10000,
                    force_tol=1e-8, dt0=0.02, initial_positions=None, callback=None,
-                   chunk_steps=100):
+                   chunk_steps=100, skip_mask=None):
     """Minimize each (network, gamma, kappa) independently in float64.
 
     ``positions`` in the returned dictionary has shape ``(B, Nmax, 2)``.
@@ -148,6 +149,8 @@ def minimize_batch(networks, gammas, kappas, *, backend="jax", max_steps=10000,
     of ``max_steps``. ``failed`` marks nonfinite calculations specifically.
     ``initial_positions`` may be padded or a list of unpadded arrays; otherwise
     every strain starts from its own affine image of the reference network.
+    ``skip_mask`` freezes already checkpointed members while retaining batch
+    shape; skipped members have ``skipped=True, converged=False``.
     """
     if backend not in ("numpy", "jax"):
         raise ValueError("backend must be 'numpy' or 'jax'")
@@ -157,6 +160,9 @@ def minimize_batch(networks, gammas, kappas, *, backend="jax", max_steps=10000,
     if not (np.isfinite(dt0) and dt0 > 0 and np.isfinite(force_tol) and force_tol > 0):
         raise ValueError("dt0 and force_tol must be positive and finite")
     batch = len(networks)
+    skipped = np.zeros(batch, dtype=bool) if skip_mask is None else np.asarray(skip_mask, dtype=bool)
+    if skipped.shape != (batch,):
+        raise ValueError("skip_mask must be a vector of batch length")
     gammas, kappas = np.asarray(gammas, dtype=np.float64), np.asarray(kappas, dtype=np.float64)
     if (gammas.shape != (batch,) or kappas.shape != (batch,)
             or not np.all(np.isfinite(gammas)) or not np.all(np.isfinite(kappas))
@@ -188,17 +194,19 @@ def minimize_batch(networks, gammas, kappas, *, backend="jax", max_steps=10000,
     finite = np.isfinite(energy) & np.all(np.isfinite(force), axis=(1, 2)) & np.all(np.isfinite(x), axis=(1, 2))
     state = {"x": x, "v": np.zeros_like(x), "force": force, "energy": energy,
              "initial_energy": energy.copy(), "max_force": maximum,
-             "converged": finite & (maximum <= force_tol), "failed": ~finite,
+             "converged": finite & (maximum <= force_tol) & ~skipped, "failed": ~finite,
+             "skipped": skipped,
              "steps": np.zeros(batch, dtype=np.int64), "dt": np.full(batch, dt0),
              "alpha": np.full(batch, 0.1), "positive": np.zeros(batch, dtype=np.int64),
              "center": np.sum(x * mask, axis=1) / np.sum(mask, axis=1)}
     while np.any(~np.asarray(state["converged"]) & ~np.asarray(state["failed"])
-                 & (np.asarray(state["steps"]) < max_steps)):
+                 & ~np.asarray(state["skipped"]) & (np.asarray(state["steps"]) < max_steps)):
         if backend == "jax":
             state = chunk(state, data, gammas, kappas, force_tol, max_steps, 10 * dt0, chunk_steps)
         else:
             for _ in range(chunk_steps):
-                active = ~state["converged"] & ~state["failed"] & (state["steps"] < max_steps)
+                active = (~state["converged"] & ~state["failed"] & ~state["skipped"]
+                          & (state["steps"] < max_steps))
                 if not np.any(active):
                     break
                 state = _step(state, data, gammas, kappas, force_tol, max_steps,
