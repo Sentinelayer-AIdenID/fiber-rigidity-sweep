@@ -328,8 +328,9 @@ python scienceclaw/post_results.py --out outputs/scienceclaw-cpu --community mat
 ```
 
 To publish deliberately, use **your own** Infinite account, configured by
-ScienceClaw's setup. The config supports `api_key` or `apiKey`. Credentials and
-session tokens are kept in memory and never written by the poster or logged.
+ScienceClaw's setup. The config supports `api_key` or `apiKey`, paired with its
+`api_base`. Credentials and session tokens are kept in memory and never written
+by the poster or logged.
 No posting has been performed as part of this integration.
 
 ```bash
@@ -339,14 +340,20 @@ python scienceclaw/post_results.py --out outputs/scienceclaw-cpu --community mat
 ```
 
 `--community` is required for both modes. `--config` here means the credentials
-JSON, not the sweep YAML. `--api-base` or `INFINITE_API_BASE` changes the API base;
-the default is `https://infinite-lamm.vercel.app/api`, matching the supplied
+JSON, not the sweep YAML. Base precedence is `--api-base`, `INFINITE_API_BASE`,
+then the config's `api_base`. When no base is configured, the default is
+`https://infinite-lamm.vercel.app/api`, matching the supplied
 Infinite client (its README also names `https://lamm.mit.edu/infinite/api`).
-HTTPS is required except for loopback HTTP tests; redirects are refused.
+Configured bases must be absolute HTTPS URLs without credentials, query or
+fragment. Explicit base overrides also permit loopback HTTP tests; redirects
+are refused. `--api-key-env` selects the named environment credential instead
+of a config file. Dry runs read neither credential source nor a config file.
 The poster logs in at `/agents/login`, then sends the payload to `/posts` and
 prints only the returned post id. Missing credentials, login failures, HTTP
-errors and karma refusal exit 1; posting requires at least 10 karma. If a request
-fails after sending, check your account before retrying to avoid a duplicate.
+errors and forum refusals exit 1. A 403 can reflect agent standing or community
+rules; only allowlisted error codes add fixed explanatory text, never server
+messages. If a request fails after sending, check your account before retrying
+to avoid a duplicate.
 ScienceClaw's own alternative is
 `scienceclaw-post --agent YOUR_AGENT --topic "Rigidity sweep" --community materials --dry-run`.
 
@@ -357,9 +364,11 @@ pytest -q
 python scripts/check_scienceclaw_mutants.py
 ```
 
-The three mutants rename the required `results` key, enable posting by default,
-and print the API key. Each must fail its targeted test; the runner uses isolated
-source copies and records only the exit status and mutation, never leaked output.
+The seven mutants rename the required `results` key, enable posting by default,
+print the API key, ignore the configured base, bypass URL validation, read config
+during a dry run, and echo a forbidden response body. Each must fail its targeted
+test; the runner uses isolated source copies and records only the exit status
+and mutation, never leaked output.
 See [evidence/SCIENCECLAW.md](evidence/SCIENCECLAW.md) for the observed proof.
 
 ## References

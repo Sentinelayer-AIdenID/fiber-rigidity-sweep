@@ -18,6 +18,10 @@ if __package__ in (None, ""):
 from scienceclaw.results import load_report
 
 DEFAULT_API_BASE = "https://infinite-lamm.vercel.app/api"
+FORBIDDEN_CODES = {
+    "AGENT_BANNED": "The forum reports that this agent is banned.",
+    "INSUFFICIENT_KARMA": "The forum requires more karma for this action.",
+}
 
 
 class PostError(Exception):
@@ -60,7 +64,8 @@ def build_payload(report, community, repo_url=None, viewer_url=None):
                 toolsUsed=["fiber-network-rigidity"], evidenceSummary=report["summary"])
 
 
-def load_api_key(config, env_name):
+def load_post_settings(config, env_name, base_override):
+    base = DEFAULT_API_BASE
     if env_name:
         value = os.environ.get(env_name)
     elif config:
@@ -71,11 +76,45 @@ def load_api_key(config, env_name):
         if not isinstance(document, dict):
             raise PostError("Infinite credentials must be a JSON object.")
         value = document.get("api_key") or document.get("apiKey")
+        base = document.get("api_base", DEFAULT_API_BASE)
     else:
         raise PostError("--post requires --config or --api-key-env with your own Infinite credentials.")
     if not isinstance(value, str) or not value.strip():
         raise PostError("Infinite API key is missing or invalid.")
-    return value
+    base = base_override if base_override is not None else base
+    return value, validate_api_base(base, allow_local_http=base_override is not None)
+
+
+def validate_api_base(base, *, allow_local_http=False):
+    try:
+        if not isinstance(base, str) or any(c.isspace() or ord(c) < 32 for c in base):
+            raise ValueError
+        url = urllib.parse.urlsplit(base)
+        local = url.hostname in ("localhost", "127.0.0.1", "::1")
+        if (url.scheme != "https" and not (allow_local_http and url.scheme == "http" and local)
+                or not url.hostname or url.username is not None or url.password is not None
+                or "?" in base or "#" in base):
+            raise ValueError
+        _ = url.port
+    except ValueError:
+        raise PostError("API base must be an absolute HTTPS URL without credentials, query or fragment "
+                        "(explicit overrides allow HTTP only for local testing).") from None
+    return base.rstrip("/")
+
+
+def forbidden_message(exc, endpoint):
+    action = "post" if endpoint == "/posts" else "request"
+    message = (f"The forum refused the {action} (HTTP 403); "
+               "check your agent's standing and the community's rules.")
+    try:
+        raw = exc.read(4097)
+        document = json.loads(raw) if len(raw) <= 4096 else None
+        code = document.get("code") if isinstance(document, dict) else None
+        if isinstance(code, str) and code in FORBIDDEN_CODES:
+            message += " " + FORBIDDEN_CODES[code]
+    except (OSError, ValueError, http.client.HTTPException):
+        pass
+    return message
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -104,7 +143,7 @@ def api_request(base, endpoint, body, token=None):
         return result
     except urllib.error.HTTPError as exc:
         if exc.code == 403:
-            message = "Infinite refused the request (HTTP 403); posting requires at least 10 karma."
+            message = forbidden_message(exc, endpoint)
         elif exc.code == 401:
             message = "Infinite authentication failed (HTTP 401)."
         else:
@@ -117,16 +156,7 @@ def api_request(base, endpoint, body, token=None):
 
 
 def publish(payload, base, key):
-    try:
-        url = urllib.parse.urlsplit(base)
-        local = url.hostname in ("localhost", "127.0.0.1", "::1")
-        if (url.scheme != "https" and not (url.scheme == "http" and local)
-                or not url.hostname or url.username or url.password or url.query or url.fragment):
-            raise ValueError
-        _ = url.port
-    except ValueError:
-        raise PostError("API base must be HTTPS (HTTP is allowed only for local testing).") from None
-    base = base.rstrip("/")
+    base = validate_api_base(base, allow_local_http=True)
     login = api_request(base, "/agents/login", {"apiKey": key})
     token = login.get("token")
     if not isinstance(token, str) or not token or any(c.isspace() for c in token):
@@ -153,20 +183,20 @@ def main(argv=None):
     credentials = parser.add_mutually_exclusive_group()
     credentials.add_argument("--config", help="Your Infinite credentials JSON (not a sweep YAML)")
     credentials.add_argument("--api-key-env", help="Name of an environment variable containing your API key")
-    parser.add_argument("--api-base", default=os.environ.get("INFINITE_API_BASE", DEFAULT_API_BASE))
+    parser.add_argument("--api-base", default=os.environ.get("INFINITE_API_BASE"))
     args = parser.parse_args(argv)
     try:
         report = load_report(args.out, ROOT)
         payload = build_payload(report, args.community, args.repo_url, args.viewer_url)
         draft = json.dumps(payload, indent=2, allow_nan=False)
         # Dry runs neither read credentials nor construct an HTTP client.
-        key = load_api_key(args.config, args.api_key_env) if args.post else None
+        key, base = load_post_settings(args.config, args.api_key_env, args.api_base) if args.post else (None, None)
         if key and key in draft:
             raise PostError("The draft contains credential material; refusing to output or post it.")
         if args.draft_out:
             Path(args.draft_out).write_text(draft + "\n", encoding="utf-8")
         if args.post:
-            post_id = publish(payload, args.api_base, key)
+            post_id = publish(payload, base, key)
             print(json.dumps({"post_id": post_id}))
         else:
             print(draft)
