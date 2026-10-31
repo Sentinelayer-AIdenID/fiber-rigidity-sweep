@@ -26,7 +26,7 @@ def critical_strains(gamma, modulus, nonaff, converged):
     valid = np.asarray(converged, bool)
     if g.ndim != 1 or any(v.shape != g.shape for v in (k, a, valid)):
         raise ValueError("critical-strain inputs must be matching vectors")
-    if np.any(g <= 0) or np.any(np.diff(g) <= 0):
+    if not np.all(np.isfinite(g)) or np.any(g <= 0) or np.any(np.diff(g) <= 0):
         raise ValueError("strains must be positive and increasing")
     result = dict(gamma_c_K=None, gamma_c_nonaffinity=None, agreement_log10=None)
     if len(g) < 5:

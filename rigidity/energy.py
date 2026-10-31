@@ -60,6 +60,10 @@ def numpy_evaluate(x, data, gamma, kappa):
     forces *= data["node_mask"][:, None]
     stress = (np.sum(gd[:, 0] * d[:, 1])
               + np.sum(ga[:, 0] * a[:, 1] + gb[:, 0] * b[:, 1])) / abs(np.linalg.det(box))
+    regular = not (np.any(em & (length < 1e-14)) or np.any(tm & ((la < 1e-14) | (lb < 1e-14))))
+    # A collapsed segment has undefined angular/axial direction, not equilibrium.
+    forces = np.where(regular, forces, np.nan)
+    stress = np.where(regular, stress, np.nan)
     return dict(energy=edge_stretch.sum() + triplet_bend.sum(),
                 stretch_energy=edge_stretch.sum(), bend_energy=triplet_bend.sum(),
                 forces=forces, stress=stress, edge_stretch=edge_stretch,
@@ -95,6 +99,9 @@ def jax_evaluate(x, data, gamma, kappa):
     forces = forces.at[trips[:, 2]].add(-gb) * data["node_mask"][:, None]
     stress = (jnp.sum(gd[:, 0] * d[:, 1])
               + jnp.sum(ga[:, 0] * a[:, 1] + gb[:, 0] * b[:, 1])) / jnp.abs(jnp.linalg.det(box))
+    regular = ~(jnp.any(em & (length < 1e-14)) | jnp.any(tm & ((la < 1e-14) | (lb < 1e-14))))
+    forces = jnp.where(regular, forces, jnp.nan)
+    stress = jnp.where(regular, stress, jnp.nan)
     return dict(energy=edge_stretch.sum() + triplet_bend.sum(),
                 stretch_energy=edge_stretch.sum(), bend_energy=triplet_bend.sum(),
                 forces=forces, stress=stress, edge_stretch=edge_stretch,

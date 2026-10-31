@@ -37,3 +37,8 @@ def test_critical_strains_known_upturn_peak_and_fail_closed():
     assert failed["gamma_c_K"] != g[3]
     unresolved = critical_strains(g, np.ones(7), np.arange(7), [True]*7)
     assert all(v is None for v in unresolved.values())
+
+
+def test_critical_strains_reject_nonfinite_input():
+    with pytest.raises(ValueError, match="strains"):
+        critical_strains([.001, .01, np.nan, .1, 1.], [1.]*5, [1.]*5, [True]*5)

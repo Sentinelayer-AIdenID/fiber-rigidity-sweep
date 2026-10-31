@@ -85,3 +85,23 @@ def test_numpy_jax_agreement_and_virial_work(kind):
     ep = evaluate(affine(x, h), net, .2+h, .17)["energy"]
     em = evaluate(affine(x, -h), net, .2-h, .17)["energy"]
     assert result["stress"] == pytest.approx((ep-em)/(2*h*abs(np.linalg.det(net.box))), rel=1e-7)
+
+
+def test_collapsed_active_segments_are_not_equilibria():
+    net = motif("stretch")
+    x = net.positions.copy()
+    x[1] = x[0]
+    for backend in ("numpy", "jax"):
+        assert not np.isfinite(evaluate(x, net, backend=backend)["forces"]).all()
+
+
+def test_periodic_bending_virial_matches_virtual_work():
+    from rigidity.network import generate_network
+    net = generate_network(6, 6, 3.5, 4)
+    x = affine(net.positions, .2) + np.random.default_rng(9).normal(0., .03, net.positions.shape)
+    h = 1e-6
+    for backend in ("numpy", "jax"):
+        ep = evaluate(affine(x, h), net, .2+h, .4, backend)["energy"]
+        em = evaluate(affine(x, -h), net, .2-h, .4, backend)["energy"]
+        assert virial_stress(x, net, .2, .4, backend) == pytest.approx(
+            (ep-em)/(2*h*abs(np.linalg.det(net.box))), rel=1e-7)
