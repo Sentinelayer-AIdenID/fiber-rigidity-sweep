@@ -1,0 +1,109 @@
+{
+  "base": "c8daeb1b2f7a22c897894605e4a90844cda4973d",
+  "method": "New tests copied into a detached base worktree; base production source unchanged.",
+  "results": [
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "-x",
+        "tests/test_analysis.py"
+      ],
+      "exit_code": 2,
+      "tail": [
+        "ImportError while importing test module '<repo>/.git/addendum-base/tests/test_analysis.py'.",
+        "Hint: make sure your test modules/packages have valid Python names.",
+        "Traceback:",
+        "/usr/lib/python3.12/importlib/__init__.py:90: in import_module",
+        "    return _bootstrap._gcd_import(name[level:], package, level)",
+        "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "tests/test_analysis.py:4: in <module>",
+        "    from rigidity.analysis import (critical_strains, critical_strain_trends,",
+        "E   ImportError: cannot import name 'critical_strain_trends' from 'rigidity.analysis' (<repo>/.git/addendum-base/rigidity/analysis.py)",
+        "=========================== short test summary info ============================",
+        "ERROR tests/test_analysis.py",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+        "1 error in 0.27s"
+      ]
+    },
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "-x",
+        "tests/test_exponent_export.py"
+      ],
+      "exit_code": 1,
+      "tail": [
+        "        values[\"converged\"][0, 0, 0, 7] = False",
+        "        values[\"K\"][0, 0, :, 7] = 1e12",
+        "        values[\"K\"][0, 0, 0, 9] = np.nan  # Successful state, failed derivative stencil.",
+        "        values[\"K\"][0, 0, 1, 9] = 1e12",
+        "        curve = viewer_curves(values)[0]",
+        ">       assert set(curve[\"critical_exponents\"]) == {\"gamma_c_K\", \"gamma_c_nonaffinity\"}",
+        "                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "E       KeyError: 'critical_exponents'",
+        "",
+        "tests/test_exponent_export.py:29: KeyError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_exponent_export.py::test_export_fits_complete_seed_stencils_and_keeps_both_onset_choices",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.64s"
+      ]
+    },
+    {
+      "command": [
+        "--test",
+        "--test-name-pattern",
+        "critical table",
+        "tests/test_viewer.mjs"
+      ],
+      "exit_code": 1,
+      "tail": [
+        "    Test.processPendingSubtests (node:internal/test_runner/test:744:18)",
+        "    Test.postRun (node:internal/test_runner/test:1173:19)",
+        "    Test.run (node:internal/test_runner/test:1101:12)",
+        "    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)",
+        "  ...",
+        "1..2",
+        "# tests 2",
+        "# suites 0",
+        "# pass 0",
+        "# fail 2",
+        "# cancelled 0",
+        "# skipped 0",
+        "# todo 0",
+        "# duration_ms 94.163153"
+      ]
+    },
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "-x",
+        "tests/test_exponent_export.py::test_export_not_determined_when_convergence_leaves_too_few_fit_points"
+      ],
+      "exit_code": 1,
+      "tail": [
+        "",
+        "    def test_export_not_determined_when_convergence_leaves_too_few_fit_points():",
+        "        values = values_for_fit()",
+        "        values[\"converged\"][0, 0, 0, 8:] = False",
+        "        curve = viewer_curves(values)[0]",
+        ">       fit = curve[\"critical_exponents\"][\"gamma_c_nonaffinity\"]",
+        "              ^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "E       KeyError: 'critical_exponents'",
+        "",
+        "tests/test_exponent_export.py:42: KeyError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_exponent_export.py::test_export_not_determined_when_convergence_leaves_too_few_fit_points",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 0.62s"
+      ]
+    }
+  ]
+}

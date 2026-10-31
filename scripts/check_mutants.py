@@ -47,6 +47,18 @@ MUTANTS = [
      'complete_modulus = good.all(axis=0) & np.isfinite(results["K"][iz, ik]).all(axis=0)',
      'complete_modulus = good.all(axis=0)',
      "tests/test_io_sweep.py::test_mean_modulus_onset_requires_complete_seed_stencils"),
+    ("fit-unshifted-strain", "rigidity/analysis.py", "np.log(delta[selected])", "np.log(g[selected])",
+     "tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty"),
+    ("fit-failed-points", "rigidity/analysis.py", "selected = good &", "selected = np.ones_like(good) &",
+     "tests/test_analysis.py::test_exponent_excludes_failed_nonpositive_and_out_of_window_points"),
+    ("fit-incomplete-seed-stencils", "rigidity/io.py", 'mean["K"], complete_modulus, estimates[key]',
+     'mean["K"], good.any(axis=0), estimates[key]',
+     "tests/test_exponent_export.py::test_export_fits_complete_seed_stencils_and_keeps_both_onset_choices"),
+    ("fit-too-few-points", "rigidity/analysis.py", "if n < min_points:", "if n < 3:",
+     "tests/test_exponent_export.py::test_export_not_determined_when_convergence_leaves_too_few_fit_points"),
+    ("trend-target-instead-of-measured-z", "rigidity/analysis.py", 'float(c["z_actual"]), float(c[method])',
+     'float(c["z_target"]), float(c[method])',
+     "tests/test_analysis.py::test_transition_trend_uses_measured_z_and_keeps_kappa_and_methods_separate"),
 ]
 
 

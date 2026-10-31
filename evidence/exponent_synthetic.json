@@ -1,0 +1,60 @@
+{
+  "expected_f": 1.17,
+  "observed": {
+    "status": "determined",
+    "reason": null,
+    "gamma_c": 0.2,
+    "f": 1.1714038524333783,
+    "f_stderr": 0.004027523598896798,
+    "f_ci95": [
+      1.1631666417845257,
+      1.179641063082231
+    ],
+    "r_squared": 0.9996573016353024,
+    "delta_window": [
+      0.009,
+      0.101
+    ],
+    "fit_window": [
+      0.21000000000000002,
+      0.30000000000000004
+    ],
+    "n_points": 31,
+    "point_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "literature_f": 0.7,
+    "delta_f_literature": 0.47140385243337835
+  },
+  "fixture": "tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty"
+}

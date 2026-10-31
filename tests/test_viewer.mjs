@@ -178,3 +178,39 @@ test('bundled sample JSON and script agree and render through all saved selectio
   }
   assert(ui.drawCalls.length >= json.network_frames.length);
 });
+
+test('critical table shows uncertainty, window, failed fits and per-kappa measured-z trend', () => {
+  const data = fixture();
+  const failed = {status: 'not determined', n_points: 2, f: null, fit_window: [.11, .12], reason: 'only 2 usable near-transition points; need 5'};
+  for (const curve of data.curves) curve.critical_exponents = {gamma_c_K: failed, gamma_c_nonaffinity: failed};
+  data.curves[0].critical_exponents.gamma_c_nonaffinity = {status: 'determined', f: .93, f_stderr: .01,
+    f_ci95: [.905, .955], n_points: 10, fit_window: [.11, .15], delta_f_literature: .23};
+  data.critical_strain_trends = [
+    {kappa: .001, method: 'gamma_c_nonaffinity', status: 'increasing', n_points: 2},
+    {kappa: .01, method: 'gamma_c_nonaffinity', status: 'not determined', n_points: 1}];
+  const ui = mount(data);
+  assertLoaded(ui);
+  const rows = ui.get('critical-fit-rows').children;
+  assert.equal(rows.length, 4);
+  assert.equal(rows[0].children[0].textContent, '3.15');
+  assert.match(rows[0].children[3].textContent, /not determined: only 2/);
+  assert.equal(rows[1].children[3].textContent, '0.93 ± 0.01');
+  assert.equal(rows[1].children[3].title, 'Conditional 95% interval: 0.905 – 0.955');
+  assert.equal(rows[1].children[4].textContent, '0.11 – 0.15 (10)');
+  assert.equal(rows[1].children[5].textContent, '0.23');
+  assert.match(ui.get('critical-trend').textContent, /Nonaffinity peak: increasing \(2 resolved/);
+  assert.match(ui.get('critical-trend').textContent, /limit.*not determined/);
+  ui.get('kappa-select').value = '.01';
+  ui.get('kappa-select').handlers.change();
+  assert.equal(ui.get('critical-fit-rows').children.length, 2);
+  assert.match(ui.get('critical-trend').textContent, /Nonaffinity peak: not determined \(1 resolved/);
+});
+
+test('critical table keeps legacy exports unresolved and rejects an invalid fit', async () => {
+  const ui = mount(fixture());
+  assert.equal(ui.get('critical-fit-rows').children[0].children[3].textContent, 'not determined');
+  const data = fixture();
+  data.curves[0].critical_exponents = {gamma_c_K: {status: 'determined', f: .7}};
+  await ui.upload(data);
+  assert.match(ui.get('message').textContent, /Invalid critical exponent result/);
+});

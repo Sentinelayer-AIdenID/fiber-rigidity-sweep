@@ -18,7 +18,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_analytic_gradient_central_difference[stretch]",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 1.46s"
+        "1 failed in 0.68s"
       ]
     },
     {
@@ -38,7 +38,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_analytic_gradient_central_difference[bend]",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.61s"
+        "1 failed in 0.65s"
       ]
     },
     {
@@ -58,7 +58,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 1.44s"
+        "1 failed in 0.62s"
       ]
     },
     {
@@ -78,7 +78,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_triangular_shear_modulus_energy_and_virial",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.60s"
+        "1 failed in 0.62s"
       ]
     },
     {
@@ -98,7 +98,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_lees_edwards_affine_equilibrium[numpy] - A...",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.65s"
+        "1 failed in 0.62s"
       ]
     },
     {
@@ -118,7 +118,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_physics.py::test_bend_straight_zero_and_kink_positive - ass...",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 1.64s"
+        "1 failed in 0.59s"
       ]
     },
     {
@@ -138,7 +138,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_fire.py::test_fire_lowers_energy_and_converges - assert np....",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 3.43s"
+        "1 failed in 2.05s"
       ]
     },
     {
@@ -158,7 +158,7 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_network.py::test_cleanup_removes_cycles_attached_at_articulation_or_bridge",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.59s"
+        "1 failed in 0.22s"
       ]
     },
     {
@@ -172,13 +172,13 @@
       "returncode": 1,
       "detected": true,
       "tail": [
-        "E         + 85f0569617e27b1b06aaaddcc1593ad1af45b30b4930a6209ec6cfeac29a876d",
+        "E         + 5a1aa191ca6013a41505a84829ea0f6ffc72bcc6dfd6c833f49990bb370a6131",
         "",
         "tests/test_network.py:46: AssertionError",
         "=========================== short test summary info ============================",
         "FAILED tests/test_network.py::test_network_seed_determinism - AssertionError:...",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.66s"
+        "1 failed in 0.30s"
       ]
     },
     {
@@ -194,11 +194,11 @@
       "tail": [
         "E        +        where <ufunc 'isnan'> = np.isnan",
         "",
-        "tests/test_analysis.py:15: AssertionError",
+        "tests/test_analysis.py:16: AssertionError",
         "=========================== short test summary info ============================",
         "FAILED tests/test_analysis.py::test_modulus_nonuniform_quadratic_and_failure_gap",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.33s"
+        "1 failed in 1.19s"
       ]
     },
     {
@@ -214,11 +214,11 @@
       "tail": [
         "E         Expected: 0.0625 \u00b1 6.2e-08",
         "",
-        "tests/test_analysis.py:25: AssertionError",
+        "tests/test_analysis.py:26: AssertionError",
         "=========================== short test summary info ============================",
         "FAILED tests/test_analysis.py::test_nonaffinity_translation_and_normalization",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.50s"
+        "1 failed in 1.14s"
       ]
     },
     {
@@ -232,13 +232,13 @@
       "returncode": 1,
       "detected": true,
       "tail": [
-        "{\"arrays_sha256\": \"b39d948d7290fe237588ce3810bda7b8ebfc812923754e6704b300c643d02f4c\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.08568086102604866, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
+        "{\"arrays_sha256\": \"5f2cc596ed786f1b62f78385a4e8a7e1bdf5a22fd51a82dd8802eb6cec812a90\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.07453935802914202, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
         "z=3.80 kappa=0.03: 10/10 converged",
-        "{\"arrays_sha256\": \"1d21c55a3640cfd1850d8b7b6d3fe88aca78cc2c646cc66695690991c301ff62\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.04194788099266589, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
+        "{\"arrays_sha256\": \"a41c3d39161fbbbdf256689f4ae5839a4361047f1fc9ec947e3e2232dacc8140\", \"backend\": \"jax\", \"converged\": 10, \"elapsed_seconds\": 0.04165667691268027, \"node_iterations\": 97560.0, \"total\": 10, \"total_fire_steps\": 2710}",
         "=========================== short test summary info ============================",
         "FAILED tests/test_io_sweep.py::test_npz_schema_determinism_and_resume - Faile...",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 4.51s"
+        "1 failed in 3.68s"
       ]
     },
     {
@@ -254,11 +254,11 @@
       "tail": [
         "E       assert 0.01 is None",
         "",
-        "tests/test_analysis.py:49: AssertionError",
+        "tests/test_analysis.py:50: AssertionError",
         "=========================== short test summary info ============================",
         "FAILED tests/test_analysis.py::test_endpoint_global_peak_is_unresolved_even_with_interior_bump",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.19s"
+        "1 failed in 1.13s"
       ]
     },
     {
@@ -278,7 +278,107 @@
         "=========================== short test summary info ============================",
         "FAILED tests/test_io_sweep.py::test_mean_modulus_onset_requires_complete_seed_stencils",
         "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
-        "1 failed in 0.66s"
+        "1 failed in 1.52s"
+      ]
+    },
+    {
+      "mutant": "fit-unshifted-strain",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "np.log(delta[selected])",
+        "after": "np.log(g[selected])"
+      },
+      "test": "tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 1.17 \u00b1 0.0585",
+        "",
+        "tests/test_analysis.py:63: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.21s"
+      ]
+    },
+    {
+      "mutant": "fit-failed-points",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "selected = good &",
+        "after": "selected = np.ones_like(good) &"
+      },
+      "test": "tests/test_analysis.py::test_exponent_excludes_failed_nonpositive_and_out_of_window_points",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         ? ++++",
+        "",
+        "tests/test_analysis.py:84: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_exponent_excludes_failed_nonpositive_and_out_of_window_points",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.14s"
+      ]
+    },
+    {
+      "mutant": "fit-incomplete-seed-stencils",
+      "source": "rigidity/io.py",
+      "replacement": {
+        "before": "mean[\"K\"], complete_modulus, estimates[key]",
+        "after": "mean[\"K\"], good.any(axis=0), estimates[key]"
+      },
+      "test": "tests/test_exponent_export.py::test_export_fits_complete_seed_stencils_and_keeps_both_onset_choices",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 0.93 \u00b1 1.0e-12",
+        "",
+        "tests/test_exponent_export.py:32: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_exponent_export.py::test_export_fits_complete_seed_stencils_and_keeps_both_onset_choices",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.47s"
+      ]
+    },
+    {
+      "mutant": "fit-too-few-points",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "if n < min_points:",
+        "after": "if n < 3:"
+      },
+      "test": "tests/test_exponent_export.py::test_export_not_determined_when_convergence_leaves_too_few_fit_points",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E       AssertionError: assert 'need 5' in 'usable distances span less than a factor of three'",
+        "",
+        "tests/test_exponent_export.py:47: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_exponent_export.py::test_export_not_determined_when_convergence_leaves_too_few_fit_points",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.54s"
+      ]
+    },
+    {
+      "mutant": "trend-target-instead-of-measured-z",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "float(c[\"z_actual\"]), float(c[method])",
+        "after": "float(c[\"z_target\"]), float(c[method])"
+      },
+      "test": "tests/test_analysis.py::test_transition_trend_uses_measured_z_and_keeps_kappa_and_methods_separate",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Use -v to get more diff",
+        "",
+        "tests/test_analysis.py:125: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_transition_trend_uses_measured_z_and_keeps_kappa_and_methods_separate",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.18s"
       ]
     }
   ]

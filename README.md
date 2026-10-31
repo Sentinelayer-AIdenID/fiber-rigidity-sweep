@@ -141,7 +141,7 @@ from the zero-strain reference, translation removed, and l_c the mean retained
 reference **segment** length. It is the total-displacement definition requested
 here, not the incremental nonaffinity often used in criticality analyses.
 
-Two **operational grid estimates**, without fitted critical exponents:
+Two **operational grid estimates** of the critical strain:
 
 1. K′ onset: first interior point after the first three samples that reaches
    twice their median K′, rises from the preceding point, and stays above that
@@ -169,6 +169,47 @@ junction density (degree≥3 nodes/area) from the output. Coordination and densi
 are different controls; this dilution protocol changes both. The small sample
 does not establish a monotone density-to-transition law.
 
+### Conditional critical-exponent fits
+
+`rigidity.analysis.fit_critical_exponent(gamma, modulus, converged, gamma_c)`
+fits K′ = A (gamma − gamma_c)^f above a **fixed** transition estimate by
+unweighted least squares in log K′ versus log(gamma − gamma_c). The slope is
+free; it is never constrained to the approximately **0.7** reported for the
+sub-isostatic strain-controlled class by Sharma et al. (2016). The viewer reports
+f − 0.7 for comparison. This is an effective finite-window fit, not evidence of
+a universal exponent or a reproduction of the paper.
+
+The default distance window is **0.05 gamma_c ≤ gamma − gamma_c ≤ 0.5 gamma_c**;
+an explicit `window=(minimum_distance, maximum_distance)` overrides it. Choose
+the window before fitting and check sensitivity to it. At least five converged,
+finite, positive modulus points spanning a factor of three in distance are
+required. The export fits the mean K′ only where **every seed has converged and
+has a finite stress-difference stencil**, separately for each onset method and
+kappa. Failed points, missing derivatives and points outside the window cannot
+enter the fit. An unresolved onset, insufficient data or nonpositive fitted
+slope gives **"not determined"**, with null f and a reason; no fallback number
+is substituted. The function reports selected indices, actual strain bounds,
+requested distance bounds, point count and log-space R².
+
+Uncertainty is the regression standard error and a two-sided Student-t 95%
+interval (n−2 degrees of freedom). Both are **conditional on the chosen onset
+and window**. They exclude uncertainty in gamma_c, seed variability, correlated
+finite-difference errors, finite size and bending crossover. No bending plateau
+is subtracted. Finite kappa rounds the transition and may prevent a power law;
+inspect fit quality and refine the grid, kappa and system size before physical
+interpretation. Neither window nor gamma_c is optimized to obtain 0.7.
+
+The bundled CPU grid supports **no exponent fit** for either onset method: it
+has fewer than five usable points in every prescribed window. Its measured
+connectivities are approximately 3.1905 and 3.8125. At kappa=0.001, the
+nonaffinity onset **increases** from 0.0056234 to 0.0133352; at kappa=0.01 it is
+**flat** at 0.0749894. Modulus-onset trends are not determined (one resolved
+connectivity at kappa=0.001, none at kappa=0.01). Thus these data **do not show**
+the expected falling gamma_c as z approaches the 2D central-force isostatic
+point z=4. A finite-grid direction check cannot establish a zero limit at z=4;
+that limit is reported as not determined. The trend calculation keeps kappa and
+onset methods separate and sorts by measured, cleaned z, not the dilution target.
+
 ## Viewer and files
 
 Open `viewer/index.html` directly. The committed CPU sample is embedded locally,
@@ -187,6 +228,13 @@ vectors may extend outside the cell; they are not long bonds joining wrapped
 endpoints. Large exports sample at most 1,200 edges and the first seed for
 display; all states' full coordinates remain in NPZ checkpoints.
 
+The transition table lists measured z, both gamma_c estimates, f ± its standard
+error, the used strain window and point count, and f − 0.7 for the selected
+kappa. Hover over a fitted exponent for the conditional 95% interval. Unresolved
+fits show their reason. The text below the table reports the observed direction
+of gamma_c(z) for each estimator and the unresolved z=4 limit. Older JSON
+exports without fits still load and show "not determined".
+
 See [SCHEMA.md](SCHEMA.md) for axes, units, masks and file layout. No wall-clock
 timing is included in results-array hashes. `evidence/mutations.json` records
 which deliberately incorrect mechanics were rejected, with exact replacement
@@ -195,7 +243,7 @@ never modifies the working source.
 
 ## Performance evidence and limits
 
-Measured CPU demonstration: 72/72 states converged in about six seconds on a
+Measured CPU demonstration: 72/72 states converged in 5.34 seconds on a
 16-CPU host. The warmed CPU benchmark in `evidence/cpu_benchmark.json` measures
 8 states × 1,019 retained nodes × 1,000 steps, approximately 6.48 million
 node-iterations/s; topology generation, compilation warmup and export are excluded.

@@ -62,6 +62,16 @@
       <p class="panel-note">Γ = ⟨|u − u<sub>affine</sub>|²⟩ / (l<sub>c</sub>² γ²). Curves aggregate converged seeds. Missing values stay missing; no interpolated transition is implied.</p>
     </section>
 
+    <section class="panel response-panel" aria-labelledby="fit-heading">
+      <div class="panel-heading"><div><p class="eyebrow">04 / TRANSITION ANALYSIS</p><h2 id="fit-heading">Critical strain and exponent by connectivity</h2></div><span class="tag">K′ ∝ (γ − γc)<sup>f</sup></span></div>
+      <div class="table-scroll"><table class="fit-table">
+        <thead><tr><th scope="col">Measured z</th><th scope="col">Onset method</th><th scope="col">γc</th><th scope="col">f ± standard error</th><th scope="col">Used γ window (points)</th><th scope="col">f − 0.7</th></tr></thead>
+        <tbody id="critical-fit-rows"></tbody>
+      </table></div>
+      <p id="critical-trend" class="panel-note" aria-live="polite">Trend: not determined.</p>
+      <p class="panel-note">Each fit uses at least five converged, positive K′ samples above the chosen onset, with complete seed stencils. Default distance window: 0.05γc ≤ γ − γc ≤ 0.5γc, spanning at least a factor of three. Uncertainty is conditional on the onset and window; it excludes onset, seed and finite-size uncertainty. Sharma et al. (2016) report f ≈ 0.7 for the strain-controlled class; this is a comparison, not a fit constraint. Hover over a fitted exponent for its conditional 95% interval.</p>
+    </section>
+
     <footer>
       <p><strong>A map, not a universal curve.</strong> The bundled small CPU run demonstrates the workflow. Finite size, the strain grid, the bending stiffness and incomplete relaxation can shift or obscure a transition. Read the README for the model and fitting conventions.</p>
       <p>Static viewer · MIT licensed · Computation stays in your browser. The plotting libraries load from version-pinned CDNs; no server or upload is needed.</p>

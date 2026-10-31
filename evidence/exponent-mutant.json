@@ -1,0 +1,25 @@
+{
+  "method": "Isolated source copies; working source unchanged",
+  "results": [
+    {
+      "mutant": "fit-unshifted-strain",
+      "source": "rigidity/analysis.py",
+      "replacement": {
+        "before": "np.log(delta[selected])",
+        "after": "np.log(g[selected])"
+      },
+      "test": "tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty",
+      "returncode": 1,
+      "detected": true,
+      "tail": [
+        "E         Expected: 1.17 \u00b1 0.0585",
+        "",
+        "tests/test_analysis.py:63: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED tests/test_analysis.py::test_critical_exponent_recovers_known_power_and_uncertainty",
+        "!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        "1 failed in 1.29s"
+      ]
+    }
+  ]
+}

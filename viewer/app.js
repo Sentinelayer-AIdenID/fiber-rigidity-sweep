@@ -5,6 +5,7 @@
   const finite = value => typeof value === 'number' && Number.isFinite(value);
   const positive = value => finite(value) && value > 0;
   const nonnegative = value => finite(value) && value >= 0;
+  const onsetMethods = [['gamma_c_K', 'Modulus upturn'], ['gamma_c_nonaffinity', 'Nonaffinity peak']];
   const unique = values => [...new Set(values)].sort((a, b) => a - b);
   const fmt = value => !finite(value) ? 'unresolved' : value === 0 ? '0' :
     Math.abs(value) < 0.01 || Math.abs(value) >= 1000 ? value.toExponential(2) : Number(value.toPrecision(4)).toString();
@@ -30,6 +31,16 @@
         if (!Array.isArray(curve[key]) || curve[key].length !== curve.gamma.length ||
             !curve[key].every(value => value === null || finite(value))) {
           throw new Error(`Curve ${key} must have one finite number or null per strain.`);
+        }
+      }
+      if (curve.critical_exponents !== undefined) for (const [key] of onsetMethods) {
+        const fit = curve.critical_exponents?.[key];
+        const pair = value => Array.isArray(value) && value.length === 2 && value.every(finite);
+        if (!fit || !['determined', 'not determined'].includes(fit.status) ||
+            !Number.isInteger(fit.n_points) || fit.n_points < 0 ||
+            (fit.status === 'determined' && (!positive(fit.f) || !nonnegative(fit.f_stderr) ||
+              !pair(fit.f_ci95) || !pair(fit.fit_window) || !finite(fit.delta_f_literature)))) {
+          throw new Error('Invalid critical exponent result. Expected a fit with uncertainty and window, or not determined.');
         }
       }
     }
@@ -84,7 +95,37 @@
     const kappa = Number($('kappa-select').value);
     options('z-select', unique(state.data.curves.filter(curve => curve.kappa === kappa).map(curve => curve.z_target)), Number($('z-select').value));
     drawHeatmap();
+    drawCriticalTable();
     selectZ();
+  }
+
+  function drawCriticalTable() {
+    const kappa = Number($('kappa-select').value);
+    const curves = state.data.curves.filter(curve => curve.kappa === kappa).sort((a, b) => a.z_actual - b.z_actual);
+    const body = $('critical-fit-rows');
+    body.replaceChildren();
+    for (const curve of curves) for (const [key, method] of onsetMethods) {
+      const fit = curve.critical_exponents?.[key];
+      const determined = fit?.status === 'determined';
+      const row = document.createElement('tr');
+      const values = [fmt(curve.z_actual), method, positive(curve[key]) ? fmt(curve[key]) : 'not determined',
+        determined ? `${fmt(fit.f)} ± ${fmt(fit.f_stderr)}` : `not determined${fit?.reason ? `: ${fit.reason}` : ''}`,
+        fit?.fit_window ? `${fit.fit_window.map(fmt).join(' – ')} (${fit.n_points})` : `not determined (${fit?.n_points ?? 0})`,
+        determined ? fmt(fit.delta_f_literature) : 'not determined'];
+      for (const [index, value] of values.entries()) {
+        const cell = document.createElement('td');
+        cell.textContent = value;
+        if (index === 3 && determined) cell.title = `Conditional 95% interval: ${fit.f_ci95.map(fmt).join(' – ')}`;
+        row.appendChild(cell);
+      }
+      body.appendChild(row);
+    }
+    const trends = state.data.critical_strain_trends?.filter(trend => trend.kappa === kappa) ?? [];
+    const descriptions = onsetMethods.map(([key, name]) => {
+      const trend = trends.find(value => value.method === key);
+      return `${name}: ${trend?.status ?? 'not determined'} (${trend?.n_points ?? 0} resolved connectivities)`;
+    });
+    $('critical-trend').textContent = `γc versus increasing measured z below 4 — ${descriptions.join('; ')}. Expected direction: decreasing. The limit γc → 0 at z = 4 is not determined by this finite grid.`;
   }
 
   function selectZ() {

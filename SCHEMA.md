@@ -74,6 +74,34 @@ Finite energy in a failed row is diagnostic, not a usable equilibrium.
 curves**, not means of the per-seed onsets. Onset neighborhoods require all
 seeds converged; unresolved estimates are null.
 
+Each curve also contains `critical_exponents`, keyed by `gamma_c_K` and
+`gamma_c_nonaffinity`. Each entry fits the **mean** K′ above that onset at fixed
+gamma_c using complete-seed derivative stencils. It contains:
+
+- `status`: `determined` or `not determined`; `reason` is null or explanatory text.
+- `gamma_c`, `f`, `f_stderr`, `f_ci95` (two-sided Student-t 95% interval),
+  `r_squared` (log-space), `literature_f: 0.7`, `delta_f_literature: f - 0.7`.
+  Unresolved exponent values and uncertainty are null, never sentinel numbers.
+- `delta_window`: requested positive [min,max] distance above gamma_c, default
+  [0.05 gamma_c, 0.5 gamma_c], or null if gamma_c is unresolved.
+- `fit_window`: actual first/last usable **absolute strains**, or null if none;
+  `n_points`, `point_indices`: selected count and indices into the curve's gamma.
+  These diagnostics remain available when too few points prevent fitting.
+
+At least five points spanning a factor of three in positive strain distance
+are required. Uncertainty conditions on the onset and window, excluding onset,
+seed, finite-size and crossover uncertainty. These are JSON analysis fields;
+the NPZ schema and checkpoint format remain unchanged.
+
+The root `critical_strain_trends` array has one entry per kappa and onset method:
+`kappa`, `method`, `status` (`decreasing`, `increasing`, `flat`, `mixed`, or
+`not determined`), `n_points`, `total_curves`, and `points` (resolved
+`{z_actual,gamma_c}` pairs sorted by measured z with 0 < z < 4).
+At least two distinct resolved connectivities are required for a direction.
+`limit_at_z4` is always `not determined`: direction is not extrapolation.
+The viewer accepts older version-1 exports lacking these additive fields and
+shows fits/trends as not determined.
+
 Frames contain `z_target`, `kappa`, `seed`, `gamma`, `converged`, `box`,
 `positions`, `edges`, `edge_vectors`, `stretch_energy`, `bend_energy`,
 `total_edges`, `shown_edges`. The first seed is exported for every z/kappa/

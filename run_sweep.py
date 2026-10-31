@@ -12,7 +12,7 @@ import time
 import numpy as np
 import yaml
 
-from rigidity.analysis import critical_strains, nonaffinity
+from rigidity.analysis import critical_strains, critical_strain_trends, nonaffinity
 from rigidity.energy import evaluate
 from rigidity.fire import minimize_batch
 from rigidity.io import (SCHEMA_VERSION, array_hash, atomic_json, atomic_npz, load_npz,
@@ -202,7 +202,7 @@ def run(config, *, resume=False, output=None, stop_after_checkpoints=None):
                                   simulation="independent affine-start minimizations", fingerprint=stamp,
                                   seeds=config["seeds"], sample_only=False,
                                   nonconverged_excluded=True, viewer_first_seed_only=True),
-                    curves=curves, network_frames=frames)
+                    curves=curves, critical_strain_trends=critical_strain_trends(curves), network_frames=frames)
     atomic_json(root / "viewer.json", document)
     elapsed = time.perf_counter() - start_time
     summary = dict(elapsed_seconds=elapsed, converged=int(results["converged"].sum()), total=int(np.prod(shape)),

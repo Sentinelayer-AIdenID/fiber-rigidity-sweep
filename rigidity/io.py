@@ -8,7 +8,7 @@ import tempfile
 
 import numpy as np
 
-from .analysis import critical_strains
+from .analysis import critical_strains, fit_critical_exponent
 from .energy import evaluate
 from .shear import affine
 
@@ -94,11 +94,14 @@ def viewer_curves(results):
                                                        complete_modulus)["gamma_c_K"]
             estimates["agreement_log10"] = (float(np.log10(estimates["gamma_c_K"] / estimates["gamma_c_nonaffinity"]))
                                              if estimates["gamma_c_K"] and estimates["gamma_c_nonaffinity"] else None)
+            fits = {key: fit_critical_exponent(results["gamma"], mean["K"], complete_modulus, estimates[key])
+                    for key in ("gamma_c_K", "gamma_c_nonaffinity")}
             curves.append(dict(z_target=float(z), z_actual=float(np.mean(results["z_actual"][iz])),
                                kappa=float(kappa), gamma=results["gamma"].tolist(),
                                **{key: finite_list(value) for key, value in mean.items()},
                                converged_count=good.sum(axis=0).tolist(),
                                modulus_count=np.sum(good & np.isfinite(results["K"][iz, ik]), axis=0).tolist(),
+                               critical_exponents=fits,
                                **estimates))
     return curves
 
