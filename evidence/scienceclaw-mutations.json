@@ -1,0 +1,35 @@
+[
+  {
+    "mutant": "rename-results-key",
+    "source": "scienceclaw/results.py",
+    "target": "tests/test_scienceclaw_skill.py::test_skill_json_contract_and_copied_install",
+    "replacement": {
+      "before": "results=rows, artifacts=",
+      "after": "entries=rows, artifacts="
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "post-by-default",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_dry_run_default_no_network",
+    "replacement": {
+      "before": "parser.add_argument(\"--post\", action=\"store_true\",",
+      "after": "parser.add_argument(\"--post\", action=\"store_true\", default=True,"
+    },
+    "exit_code": 1,
+    "killed": true
+  },
+  {
+    "mutant": "print-api-key",
+    "source": "scienceclaw/post_results.py",
+    "target": "tests/test_scienceclaw_post.py::test_post_success_no_secret_output[env]",
+    "replacement": {
+      "before": "key = load_api_key(args.config, args.api_key_env) if args.post else None",
+      "after": "key = load_api_key(args.config, args.api_key_env) if args.post else None\n        if key:\n            print(key)"
+    },
+    "exit_code": 1,
+    "killed": true
+  }
+]

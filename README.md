@@ -278,6 +278,90 @@ mechanical sweep, H100 execution, million-node solve, browser/WebGL execution,
 3D variant, or literature-curve reproduction has been claimed. The optional 3D
 extension is deferred; this deliverable is 2D.
 
+## ScienceClaw
+
+The skill in `scienceclaw/skills/fiber-network-rigidity/` imports this project's
+existing sweep and analysis. It follows ScienceClaw's skill folder and YAML
+frontmatter contract; no ScienceClaw code is vendored. From this checkout and
+the Python environment above:
+
+```bash
+python scienceclaw/skills/fiber-network-rigidity/scripts/fiber_network_rigidity.py --out outputs/scienceclaw-cpu --format json
+python scienceclaw/skills/fiber-network-rigidity/scripts/fiber_network_rigidity.py --out outputs/scienceclaw-cpu --resume --format json
+```
+
+JSON stdout contains `summary`, per-curve `results` (measured z, both γc estimates,
+agreement, conditional exponent fits and convergence counts), `artifacts`,
+`parameters` and `limitations`. Sweep progress goes to stderr. Missing estimates
+are `"not determined"`. Open the returned viewer HTML and choose its JSON file.
+The full H100 configuration is supported with `--config configs/h100.yaml
+--backend jax` after the CUDA setup above; its runtime remains **ESTIMATED**.
+
+To install into the participant's ScienceClaw checkout, substitute its path:
+
+```bash
+export RIGIDITY_SWEEP_ROOT="$PWD"
+cp -R scienceclaw/skills/fiber-network-rigidity /path/to/scienceclaw/skills/
+cd /path/to/scienceclaw
+python3 skill_catalog.py --stats
+python3 skill_catalog.py --search rigidity
+python3 skills/fiber-network-rigidity/scripts/fiber_network_rigidity.py --out outputs/rigidity --format json
+```
+
+Add `"fiber-network-rigidity"` to `preferred_tools` in
+`~/.scienceclaw/agent_profile.json`. Keep the solver checkout accessible, and
+make its Python environment and `RIGIDITY_SWEEP_ROOT` available to the agent
+process. [SKILL.md](scienceclaw/skills/fiber-network-rigidity/SKILL.md) has the
+parameters, CPU/H100 examples, output contract and suggested upstream artifact
+coordination entries. ScienceClaw discovery itself has not been run here;
+offline tests exercise a copied skill directory.
+
+The separate poster reads completed sweep artifacts and builds an Infinite
+summary with a γc(z) table, fits and scientific limitations. **Its default is a
+dry run:** it prints the exact JSON payload, makes no network calls and reads
+no credentials. These example URLs are placeholders; replace them with your
+public repo and viewer URLs or omit both flags for an empty `dataSources` list.
+From the rigidity-sweep checkout:
+
+```bash
+python scienceclaw/post_results.py --out outputs/scienceclaw-cpu --community materials --repo-url https://example.org/your-repo --viewer-url https://example.org/your-viewer --draft-out outputs/scienceclaw-cpu/infinite-draft.json
+```
+
+To publish deliberately, use **your own** Infinite account, configured by
+ScienceClaw's setup. The config supports `api_key` or `apiKey`. Credentials and
+session tokens are kept in memory and never written by the poster or logged.
+No posting has been performed as part of this integration.
+
+```bash
+python scienceclaw/post_results.py --out outputs/scienceclaw-cpu --community materials --repo-url https://example.org/your-repo --viewer-url https://example.org/your-viewer --post --config ~/.scienceclaw/infinite_config.json
+# Alternative credential source: --post --api-key-env INFINITE_API_KEY
+# The named variable must already contain your own key; do not put keys in commands.
+```
+
+`--community` is required for both modes. `--config` here means the credentials
+JSON, not the sweep YAML. `--api-base` or `INFINITE_API_BASE` changes the API base;
+the default is `https://infinite-lamm.vercel.app/api`, matching the supplied
+Infinite client (its README also names `https://lamm.mit.edu/infinite/api`).
+HTTPS is required except for loopback HTTP tests; redirects are refused.
+The poster logs in at `/agents/login`, then sends the payload to `/posts` and
+prints only the returned post id. Missing credentials, login failures, HTTP
+errors and karma refusal exit 1; posting requires at least 10 karma. If a request
+fails after sending, check your account before retrying to avoid a duplicate.
+ScienceClaw's own alternative is
+`scienceclaw-post --agent YOUR_AGENT --topic "Rigidity sweep" --community materials --dry-run`.
+
+Offline verification (including a local fake login/post server):
+
+```bash
+pytest -q
+python scripts/check_scienceclaw_mutants.py
+```
+
+The three mutants rename the required `results` key, enable posting by default,
+and print the API key. Each must fail its targeted test; the runner uses isolated
+source copies and records only the exit status and mutation, never leaked output.
+See [evidence/SCIENCECLAW.md](evidence/SCIENCECLAW.md) for the observed proof.
+
 ## References
 
 - Sharma et al. (2016), *Nature Physics*, strain-controlled criticality in
