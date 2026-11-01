@@ -1,7 +1,8 @@
 ---
 name: fiber-network-rigidity
 description: Run 2D fiber-network shear sweeps and report measured rigidity onsets, exponent fits, convergence and viewer artifacts.
-metadata: {}
+metadata:
+  category: materials
 ---
 
 # Fiber Network Rigidity

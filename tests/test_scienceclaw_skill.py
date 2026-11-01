@@ -20,6 +20,7 @@ def test_skill_frontmatter():
     frontmatter = yaml.safe_load((SKILL / "SKILL.md").read_text().split("---", 2)[1])
     assert frontmatter["name"] == SKILL.name
     assert isinstance(frontmatter["description"], str) and frontmatter["description"].strip()
+    assert frontmatter["metadata"] == {"category": "materials"}
     assert (SKILL / "requirements.txt").read_text() == (ROOT / "requirements.txt").read_text()
 
 
