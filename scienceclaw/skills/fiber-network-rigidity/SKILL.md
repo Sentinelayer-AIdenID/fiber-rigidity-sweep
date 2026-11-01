@@ -6,6 +6,7 @@ metadata: {}
 
 # Fiber Network Rigidity
 
+This materials-science tool measures rigidity in model fiber networks.
 Use this skill to simulate strain stiffening of diluted triangular fiber networks,
 estimate critical strains from modulus and nonaffinity, and inspect conditional
 critical-exponent fits. It imports the existing rigidity-sweep solver and analysis.
